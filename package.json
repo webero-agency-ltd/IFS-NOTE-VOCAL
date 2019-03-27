@@ -1,7 +1,7 @@
 {
-  "name": "fb-data-marketing",
+  "name": "IFS-NOTE-VOCAL",
   "version": "0.0.1",
-  "description": "Récupération des donner facebook des utilisateur",
+  "description": "Ajout de node vocal dans infusionsoft",
   "author": "works.yura@gmail.com",
   "license": "MIT",
   "private": false,
