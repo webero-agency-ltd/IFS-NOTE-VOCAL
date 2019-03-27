@@ -1,12 +1,19 @@
-# IDE
 .vscode
 
-# dependencies
 node_modules
 
-# logs
 npm-debug.log
+
 yarn.lock
 
-# Backpack build
 build
+
+auth.info
+
+sftp-config.json
+
+package-lock.json
+
+readme.rd
+
+dist/* 
