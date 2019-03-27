@@ -1,0 +1,46 @@
+
+1 - ) Restructureation du dossier de l'application 
+
+- séparation du dossier native a l'applicaion ( Comportement GLOBALE ) 
+- séparation du dossier relative a un fonctionnalité de l'app ( ex : Scrapin DATA, ... ) 
+
+cella va facilité la recherche de bug de l'application, facilité aussi l'ajout de nouvelle foctionnalité 
+
+/backend : 	pour le script en background de l'application 
+
+/content : 	pour le script de contenu de l'application ( injection de script ex :ouvre une page et inject ce script )
+			si on trouve une solution pour rendre différent script en fonction de l'action ex : (scrapin.js ou groupe.js ) cella va encore plus rendre l'app plus maintenable. mais le faire coté webpack 
+
+/options : 	pour le script de vue qui va rendre la vue de l'application ( ex : tableaux des listé scrapé )
+			de ce fait cette application doivent etre en concordance avec les code des module 
+
+/popup :	Page des popups javascirpt dans google chrome extenssion seulement. 
+
+/lib : 		La librari utilisé par l'application en générale et qui pourait etre utilisé dans différent zone ex : 
+			la base de donner, le lang , les fonction utiles, ... 
+
+/module : 	C'est dans cette partie que l'on doivent metre tout les codes de l'application. MAIS MAIS MAIS :
+			tout les code qui on écrit ici font référence a ( /backend, /content, /Options, /popup ) et tout les donners de cette app seront structuré de la meme sorte 
+
+			- trouver une solution ou si on est dans le module, on crée une fonction ou un lib et qui pourait etre utilisé dans tout les autres module ( le ca on on crée deux module différent et que l'utilisation du deuxième module nessaicite l'utilisation d'un fonction dans le deusième module )
+
+
+injection.js : fichier javascript pour l'injection de tout les modules dans les fichier qui ex : dans module on a un module "node/check" et ceci a un code en backend donc on fait ca ICI 
+
+
+2 - ) Utilisation du base de donner extérieur en sqlite ou en base de donner MYSQL 
+
+3 - ) Ouvrire l'application pour l'automatisation des resaux sociaux autre que facebook. ex : linkedin, ... 
+
+4 - ) Rendre l'application extenssible si possible ex : j'ai besin du linkedin module linkedin , ... c'est aventageux a deux point. je m'explique : si l'utilisateur a besoin d'un seule module seument alors il achete une module, s'il a besoin d'un autre module alors elle utilise l'autre mdoule ex ... et pour la deuxième point, on a la possibilité de crée une application qui restrain en fonction d'un abonement d'un utilisateur 
+
+5 - ) Intégration avec les applications de CMS ou d'autre seuveur. c'est utile si : on crée une liste de compagne marketing et on veux savoire qui cliqué sur une lien ect ... on peut aussi crée des messages personalité dans vos page wordpress ex : ( contenu qui change en fonction d'un groupe ou en fonction d'une autre groupes , mètre le nom d'une persone dans les pages ... )
+
+6 - )  Création d'un dashbord pour visualisé les statistique 
+
+7 - ) Mètre en place un racourciseur d'APIn 
+
+
+
+
+
