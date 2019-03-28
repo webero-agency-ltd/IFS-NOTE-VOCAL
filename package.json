@@ -7,6 +7,7 @@
   "private": false,
   "dependencies": {
     "axios": "^0.17.0",
+    "binaryjs-client": "^1.0.0",
     "bootstrap-vue": "^2.0.0-rc.9",
     "dexie": "^2.0.3",
     "element-ui": "^2.0.1",
@@ -16,13 +17,15 @@
     "lodash": "^4.17.4",
     "moment": "^2.22.1",
     "mustache": "^2.3.0",
+    "recordrtc": "^5.5.4",
     "sql.js": "^0.5.0",
     "vue": "^2.5.2",
     "vue-materialize-datatable": "^0.7.3",
     "vue-meta": "^1.2.0",
     "vue-pouch": "^0.0.22",
     "vue-router": "^3.0.1",
-    "vuex": "^3.0.0"
+    "vuex": "^3.0.0",
+    "wav": "^1.0.2"
   },
   "scripts": {
     "lint": "eslint --ext .js,.vue src",

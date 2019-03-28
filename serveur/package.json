@@ -1,0 +1,16 @@
+{
+  "name": "IFS-NOTE-VOCAL Serveur",
+  "version": "0.0.0",
+  "description": "Serveur d'enregistrement des note vocaux",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "binaryjs": "^0.2.1",
+    "ejs": "^2.6.1",
+    "express": "^4.16.4",
+    "jade": "^1.11.0",
+    "wav": "^1.0.2"
+  },
+  "author": "gabrielpoca"
+}

@@ -7,20 +7,20 @@ const CopyWebpackPlugin = require('copy-webpack-plugin')
 let resolve = dir => path.join(__dirname, '..', 'src', dir)
 module.exports = {
   entry: {
-    tab: resolve('./tab'),
-    popup: resolve('./popup'),
-    options: resolve('./options'),
+    //tab: resolve('./tab'),
+    //popup: resolve('./popup'),
+    //options: resolve('./options'),
     content: resolve('./content'), 
-    devtools: resolve('./devtools'),
+    //devtools: resolve('./devtools'),
     background: resolve('./backend'),
-    panel: resolve('./devtools/panel'),
+    //panel: resolve('./devtools/panel'),
     inject: resolve('./content/inject'),
   },
   node: {
      fs: "empty"
   },
   output: {
-    path: path.join(__dirname, '../../', 'gestionaire-cbl/nwjs/app/extension/ciblage-marketing'),
+    path: path.join(__dirname, '../', 'build'),
     publicPath: '/',
     filename: 'js/[name].js',
     chunkFilename: 'js/[id].[name].js?[hash]',
@@ -84,12 +84,7 @@ module.exports = {
     ]
   },
   plugins: [
-    htmlPage('home', 'app', ['tab']),
-    htmlPage('popup', 'popup', ['popup']),
-    htmlPage('panel', 'panel', ['panel']),
-    htmlPage('devtools', 'devtools', ['devtools']),
-    htmlPage('options', 'options', ['options']),
-    htmlPage('background', 'background', ['background']),
+    //htmlPage('home', 'app', ['tab']),
     new CopyWebpackPlugin([{ from: path.join(__dirname, '..', 'static') }]),
     new ChromeReloadPlugin({
       port: 9090,
