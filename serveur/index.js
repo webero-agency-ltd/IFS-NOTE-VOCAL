@@ -30,7 +30,34 @@ app.use(function (req, res, next) {
 });
 
 app.get('/', function(req, res){
-	res.render('index');
+	res.render('index.ejs');
+});
+
+app.get('/audio/:filename', function(req, res){
+
+	if (  req.param("filename") ) {
+	
+		var nameFile =  req.param("filename")+'.wav' ;
+		var filePath = path.join(__dirname, '/notes/') + nameFile ; 
+
+		if ( ! fs.existsSync( filePath ) ) {
+			return res.send('Fichier pas trouver');
+		}
+
+		var stat = fs.statSync(filePath);
+
+		res.writeHead(200, {
+	        'Content-Type': 'audio/mpeg',
+	        'Content-Length': stat.size
+	    });
+
+	    return fs.createReadStream(filePath).pipe(res);
+	
+	}
+
+	return res.send('Fichier pas trouver');
+
+
 });
 
 //enregistré le document enregistré 

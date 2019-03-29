@@ -291,6 +291,19 @@ jQuery(document).ready(function($) {
 			//écoute lors du clicque sur l'élement 	
 		}
 
+		var noteListe = $('.noteContentText') ; 
+		console.log( noteListe );
+		noteListe.each(function (e) {
+
+			var text = $(this).text().trim() ; 
+			if ( text.indexOf('NOTEVOCAUX::') >= 0 ) {
+				text = text.replace(/NOTEVOCAUX::/gi, '')
+				console.log(text);
+				$(this).html( '<a href="http://'+serveur+':3700/audio/'+text+'">http://'+serveur+':3700/audio/'+text+'</a></br> <audio style="height: 30px;" src="http://'+serveur+':3700/audio/'+text+'" preload="auto" controls="" autoplay="" loop=""></audio>' ) ; 
+			}
+
+		})
+
 	}
 
 });
