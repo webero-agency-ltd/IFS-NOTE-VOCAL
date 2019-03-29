@@ -299,7 +299,7 @@ jQuery(document).ready(function($) {
 			if ( text.indexOf('NOTEVOCAUX::') >= 0 ) {
 				text = text.replace(/NOTEVOCAUX::/gi, '')
 				console.log(text);
-				$(this).html( '<a href="http://'+serveur+':3700/audio/'+text+'">http://'+serveur+':3700/audio/'+text+'</a></br> <audio style="height: 30px;" src="http://'+serveur+':3700/audio/'+text+'" preload="auto" controls="" autoplay="" loop=""></audio>' ) ; 
+				$(this).html( '<a href="http://'+serveur+':3700/audio/'+text+'">http://'+serveur+':3700/audio/'+text+'</a></br> <audio style="height: 30px;" src="http://'+serveur+':3700/audio/'+text+'" preload="auto" controls="" loop=""></audio>' ) ; 
 			}
 
 		})

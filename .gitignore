@@ -15,3 +15,7 @@ sftp-config.json
 package-lock.json
 
 readme.rd
+
+serveur/listes.json
+
+serveur/notes/*
