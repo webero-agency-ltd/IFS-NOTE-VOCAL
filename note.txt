@@ -1,0 +1,1 @@
+Au moment ou on fait l'enregistrement de vocal, puis on stope et on enregistre pas la note ( ne pas cliquer sur save , le note s'enregistre dans le serveur )

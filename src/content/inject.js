@@ -2,6 +2,8 @@ import {BinaryClient} from 'binaryjs-client';
 import recordRTC from 'recordRTC';
 import {wav} from 'wav';
 
+let serveur = '127.0.0.1' ; 
+
 function convertFloat32ToInt16(buffer) {
 
   	var l = buffer.length;
@@ -16,20 +18,27 @@ function convertFloat32ToInt16(buffer) {
 var recording = false;
 
 //l'ancer l'enregistrement de song
-window.startRecording = function() {
+window.startRecording = function( filename ) {
 
-	clearInterval( intervaleTimerRecorder ) ;
-	intervaleTimerRecorder = setInterval(setTime, 1000);
-    recording = true;
+	totalSeconds = 0 ; 
+	connect_token( filename , ()=>{
+		clearInterval( intervaleTimerRecorder ) ;
+		intervaleTimerRecorder = setInterval(setTime, 1000);
+	    recording = true;
+	    $('#run-recorded').removeAttr('disabled') ; ;
+	})
 
 }
 
 //stoper l'enregistrement 
 window.stopRecording = function() {
   	
-  	recording = false;
-  	window.Stream.end();
-  	clearInterval( intervaleTimerRecorder ) ;
+  	if ( window.stream_client ) {
+  		recording = false;
+	  	window.Stream.end();
+	  	clearInterval( intervaleTimerRecorder ) ;
+	  	window.stream_client.close() ; 
+  	}
 
 }
 
@@ -100,6 +109,7 @@ var recorderInput = `<div class="fieldContainer fieldContainerMargin">
     	}
 
     </style>
+
 </div>`;
 
 
@@ -138,6 +148,22 @@ function makeid(length) {
 
 }
 
+function connect_token( filename , cbl ) {
+	
+	var client = new BinaryClient( 'ws://'+serveur+':9001?nameFile=' + filename );
+
+	client.on('open', function() {
+
+	  	// for the sake of this example let's put the stream in the window
+	  	window.Stream = client.createStream();
+ 		window.stream_client = client ; 
+ 		cbl( client ) ;  
+
+	})
+
+}
+
+
 jQuery(document).ready(function($) { 
 
 	//Touver un moyen d'injecté une seule foix le button 
@@ -168,64 +194,93 @@ jQuery(document).ready(function($) {
 
 		var filename = today+'-contact_id-'+contactId+'-md5-'+makeid(5) ;
 
-		var client = new BinaryClient( 'ws://127.0.0.1:9001?nameFile=' + filename );
+		if (!navigator.getUserMedia)
+	      	navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia ||
+	    	navigator.mozGetUserMedia || navigator.msGetUserMedia;
 
-		client.on('open', function() {
-
-		  	// for the sake of this example let's put the stream in the window
-		  	window.Stream = client.createStream();
-
-		    if (!navigator.getUserMedia)
-		      	navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia ||
-		    	navigator.mozGetUserMedia || navigator.msGetUserMedia;
-
-		    if (navigator.getUserMedia) {
-		      	navigator.getUserMedia({audio:true}, initializeRecorder, function(e) {
-		        	alert('une erreur est survenue');
-		      	});
-		    } else {
-		    	return alert('getUserMedia non pris en charge par ce navigateur.');
-		    }
-			
-		  	//Injection des donner dans le modal infusionsoft d'édition de note
-
-			var btnAddNote = $('#template').parents('.fieldContainer');
-
-		    btnAddNote.before( recorderInput ) ; 
-
-			var session = {
-			  	audio: true,
-			  	video: false
-			};
+	    if (navigator.getUserMedia) {
+	      	navigator.getUserMedia({audio:true}, initializeRecorder, function(e) {
+	        	alert('une erreur est survenue');
+	      	});
+	    } else {
+	    	return alert('getUserMedia non pris en charge par ce navigateur.');
+	    }
 		
-			$('body').on('click','#run-recorded',function (argument) {
+	  	//Injection des donner dans le modal infusionsoft d'édition de note
 
-				if ( recording ) {
-					window.stopRecording() ; 
-					$('#logo-recorded').removeClass('active')
-					$('#stop-recorded').removeAttr('disabled') ;
-					$('#run-recorded').val('Enregistré') ; 
+		var btnAddNote = $('#template').parents('.fieldContainer');
 
-				}else{
-					window.startRecording() ; 
-					$('#logo-recorded').addClass('active') ;  
-					$('#run-recorded').val('stop enregistrement') ; 
-				}
+	    btnAddNote.before( recorderInput ) ; 
 
-			})
+		var session = {
+		  	audio: true,
+		  	video: false
+		};
+	
+		$('body').on('click','#run-recorded',function (argument) {
 
-			$('body').on('click','#stop-recorded',function (argument) {
-				
-				totalSeconds = 0 ; 
+			if ( recording ) {
+				window.stopRecording() ; 
+				$('#logo-recorded').removeClass('active')
+				$('#stop-recorded').removeAttr('disabled') ;
+				$('#run-recorded').val('Enregistré') ; 
+
+			}else{
+				window.startRecording( filename ) ; 
+				$('#logo-recorded').addClass('active') ;  
+				$('#run-recorded').attr('disabled','disabled') ;
+				$('#run-recorded').val('stop enregistrement') ; 
 				$('#stop-recorded').attr('disabled','disabled') ;
-				//supression de ce fichier dans le serveur 
-				console.log('-- REMOVE CETTE FICHER CLIENT: ' , filename );
-
-				console.log( client );
-				client.emit('remove', filename )
-			})
+			
+			}
 
 		})
+
+		$('body').on('click','#stop-recorded', async function (argument) {
+			
+			totalSeconds = 0 ; 
+			$( this ).attr('disabled','disabled') ;
+			//supression de ce fichier dans le serveur 
+			await fetch('http://'+serveur+':3700/delete?filename='+filename) ;
+			 
+		})
+
+		//ici on fait la modifici ation des valeurs boutton 
+		$('#actionType').html('<option>Message Vocal</option>') 
+
+		var dataTitle = [
+			'Résumé après appel commercial Aumscan 3',
+			'Résumé après appel commercial Aumscan 4',
+			'Résumé après appel commercial Cardiaum',
+			'Résumé après SAV Logiciel Aumscan 3',
+			'Résumé après SAV matériel Aumscan 4',
+			'Résumé après Présentation Zoom Aumscan 3',
+		]
+		//changement des titre
+		var allOptionTile = dataTitle.map(function ( e , i ) {
+			return  `<option value="${i}">${e}</option>` ; 
+		}) ; 
+
+		var sujet = $('#subject') ; 
+		if ( sujet.length ) {
+			//on ajoute la liste d'option des titres 
+			sujet.after( `<select id="subject-title">${ allOptionTile.join(" ") }</select>` ) ;
+			sujet.val( dataTitle[0] )
+			//change style pour le cacher 
+			sujet.css({ position: 'absolute' , top: '-6000px', left: '-10000px' })
+		
+		}
+
+		$('body').on('change','#subject-title',function ( e ) {
+			
+			var index = $(this).val() ; 
+			if ( dataTitle[index] ) {
+				sujet.val( dataTitle[index] )
+			}
+
+		})
+		
+		$('#notes').val('NOTEVOCAUX::'+filename) ; 
 
 	}else if ( currentLocation.pathname=='/Contact/manageContact.jsp'&&!isPop ) {
 		//on est dans la page ou on liste tout les notes 
