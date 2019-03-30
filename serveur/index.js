@@ -7,17 +7,24 @@ var port = 3700;
 var app = express();
 var path = require('path') ; 
 
+var https = require('https') ;
+
 app.set('views', path.join(__dirname, '/tpl'));
 
 app.set('view enginer','ejs')
 
 app.use(express.static(__dirname + '/public'))
 
+var options = {
+	key: fs.readFileSync("/etc/letsencrypt/archive/therapiequantique.net/privkey1.pem"),
+    cert: fs.readFileSync("/etc/letsencrypt/archive/therapiequantique.net/fullchain1.pem"),
+    ca: fs.readFileSync("/etc/letsencrypt/archive/therapiequantique.net/chain1.pem"),
+};
 
 // Add headers
 app.use(function (req, res, next) {
 	
-	res.setHeader('Access-Control-Allow-Origin', 'http://localhost:8888');
+	res.setHeader('Access-Control-Allow-Origin', '*');
 
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
 
@@ -89,7 +96,6 @@ app.get('/save', function(req, res){
 
 });
 
-
 app.get('/delete', function(req, res){
 	
 	if ( req.query.filename ) {
@@ -129,15 +135,17 @@ app.get('/delete', function(req, res){
 
 });
 
-app.listen(port);
+//app.listen(port);
+
+https.createServer(options, app).listen(port);
 
 console.log('server open on port ' + port);
 
-binaryServer = BinaryServer({port: 9001});
+binaryServer = BinaryServer({ port: 9001 });
 
 binaryServer.on('connection', function(client) {
 
-  	var url_string = require('url').parse( "http://www.example.com/t.html"+client._socket.upgradeReq.url,true).query;  
+  	var url_string = require('url').parse( "http://www.example.com/socket/"+client._socket.upgradeReq.url,true).query;  
 	var nameFile = url_string.nameFile ;
   	console.log('new connection---',url_string );
 
