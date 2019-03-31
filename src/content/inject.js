@@ -4,41 +4,41 @@ import {wav} from 'wav';
 
 let serveur = '127.0.0.1' ; 
 
-function convertFloat32ToInt16(buffer) {
-
-  	var l = buffer.length;
-  	var buf = new Int16Array(l);
-  	while (l--) {
-    	buf[l] = Math.min(1, buffer[l])*0x7FFF;
-  	}
-  	return buf.buffer;
-
-}
-
 var recording = false;
+
+chrome.runtime.onMessage.addListener(function (msg, sender, response) {
+	
+	if (msg.name=='connexion-soket-note-vocaux') {
+		recording = true;
+	}
+
+});
 
 //l'ancer l'enregistrement de song
 window.startRecording = function( filename ) {
 
 	totalSeconds = 0 ; 
-	connect_token( filename , ()=>{
-		clearInterval( intervaleTimerRecorder ) ;
-		intervaleTimerRecorder = setInterval(setTime, 1000);
-	    recording = true;
-	    $('#run-recorded').removeAttr('disabled') ; ;
-	})
+	clearInterval( intervaleTimerRecorder ) ;
+	intervaleTimerRecorder = setInterval(setTime, 1000);
+    $('#run-recorded').removeAttr('disabled') ;
+    chrome.runtime.sendMessage({
+	  	name:   'connexion',
+	  	data:   filename, 
+	});
 
 }
 
 //stoper l'enregistrement 
 window.stopRecording = function() {
   	
-  	if ( window.stream_client ) {
-  		recording = false;
-	  	window.Stream.end();
-	  	clearInterval( intervaleTimerRecorder ) ;
-	  	window.stream_client.close() ; 
-  	}
+  	recording = false;
+  	totalSeconds = 0 ;
+  	//window.Stream.end();
+  	clearInterval( intervaleTimerRecorder ) ;
+  	//window.stream_client.close() ; 
+  	chrome.runtime.sendMessage({
+	  	name:   'save-stream',
+	});
 
 }
 
@@ -48,7 +48,11 @@ function recorderProcess(e) {
     console.log ('recording');
 
   	var left = e.inputBuffer.getChannelData(0);
-  	window.Stream.write(convertFloat32ToInt16(left));
+  	//window.Stream.write(convertFloat32ToInt16());
+  	chrome.runtime.sendMessage({
+	  	name:   'stream',
+	  	data:   [...left],
+	});
   	
 }
 
@@ -148,21 +152,6 @@ function makeid(length) {
 
 }
 
-function connect_token( filename , cbl ) {
-	
-	var client = new BinaryClient( 'ws://'+serveur+':9001?nameFile=' + filename );
-
-	client.on('open', function() {
-
-	  	// for the sake of this example let's put the stream in the window
-	  	window.Stream = client.createStream();
- 		window.stream_client = client ; 
- 		cbl( client ) ;  
-
-	})
-
-}
-
 
 jQuery(document).ready(function($) { 
 
@@ -228,7 +217,7 @@ jQuery(document).ready(function($) {
 			}else{
 				window.startRecording( filename ) ; 
 				$('#logo-recorded').addClass('active') ;  
-				$('#run-recorded').attr('disabled','disabled') ;
+				//$('#run-recorded').attr('disabled','disabled') ;
 				$('#run-recorded').val('stop enregistrement') ; 
 				$('#stop-recorded').attr('disabled','disabled') ;
 			

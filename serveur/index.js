@@ -7,7 +7,7 @@ var port = 3700;
 var app = express();
 var path = require('path') ; 
 
-var https = require('https') ;
+var https = require('http') ;
 
 app.set('views', path.join(__dirname, '/tpl'));
 
@@ -16,9 +16,9 @@ app.set('view enginer','ejs')
 app.use(express.static(__dirname + '/public'))
 
 var options = {
-	key: fs.readFileSync("/etc/letsencrypt/archive/therapiequantique.net/privkey1.pem"),
-    cert: fs.readFileSync("/etc/letsencrypt/archive/therapiequantique.net/fullchain1.pem"),
-    ca: fs.readFileSync("/etc/letsencrypt/archive/therapiequantique.net/chain1.pem"),
+	//key: fs.readFileSync("/etc/letsencrypt/archive/therapiequantique.net/privkey1.pem"),
+    //cert: fs.readFileSync("/etc/letsencrypt/archive/therapiequantique.net/fullchain1.pem"),
+    //ca: fs.readFileSync("/etc/letsencrypt/archive/therapiequantique.net/chain1.pem"),
 };
 
 // Add headers
@@ -135,11 +135,11 @@ app.get('/delete', function(req, res){
 
 });
 
-//app.listen(port);
+app.listen(port);
 
-https.createServer(options, app).listen(port);
+//var server =  https.createServer(options, app).listen(port);
 
-console.log('server open on port ' + port);
+console.log('server open on port ' + port );
 
 binaryServer = BinaryServer({ port: 9001 });
 
