@@ -54,7 +54,7 @@ findconfig() ;
 
 export default function config() {
 	
-	//return { CONFIG_PAGE , URL : 'www.therapiequantique.net' , PORT : '' , PROT : 'https' } ;//'www.therapiequantique.net' 
-	return { CONFIG_PAGE , URL : 'localhost' , PORT : ':4434' , PROT : 'http' } ;
+	return { CONFIG_PAGE , URL : 'www.therapiequantique.net' , PORT : '' , PROT : 'https' } ;//'www.therapiequantique.net' 
+	//return { CONFIG_PAGE , URL : 'localhost' , PORT : ':4434' , PROT : 'http' } ;
 
 }

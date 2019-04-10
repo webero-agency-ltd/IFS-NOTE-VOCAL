@@ -117,10 +117,13 @@ chrome.runtime.onConnect.addListener(function (externalPort) {
         console.log('---- CLOSE' , client );
         if( client ){
             setTimeout(function (argument) {
-                client.close() ;
-                stream = null ;
-                client = null ; 
-                console.log('--- STOP ICI CLIENT HERE');
+                if( client ){
+
+                    client.close() ;
+                    stream = null ;
+                    client = null ; 
+                    console.log('--- STOP ICI CLIENT HERE');
+                }
             }, 1500);
         }else if ( onupload ) {
             console.log('--- CLOSE URL : ' , onupload );
@@ -131,3 +134,10 @@ chrome.runtime.onConnect.addListener(function (externalPort) {
 
 
 })
+
+//
+
+//chargement des URL charger par AJAX par l'élement en question lors de la création de note 
+chrome.webRequest.onCompleted.addListener(function (requestDetails , response) {
+    emit('force-close-tab-save-note',true,requestDetails.tabId) ;
+},{urls: ["https://*.infusionsoft.com/app/note/saveNote"]});

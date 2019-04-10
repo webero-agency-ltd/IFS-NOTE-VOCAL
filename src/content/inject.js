@@ -90,9 +90,15 @@ var observeDOM = (function(){
 //si cette valeur est = true, on fait l'enregistrement automatique des flux audio au serveur 
 var recording = false;
 
+var chrono = null ; 
+
 //écoute si un evenement dans le backend est lancer 
 //le nom de l'évenement a écoute est connexion-soket-note-vocaux
 $on('connexion-soket-note-vocaux',function (argument) {
+	//lancement du chrono
+	if ( chrono ) {
+		chrono.start() ;
+	}
 	recording = true;
 })
 
@@ -256,7 +262,7 @@ jQuery(document).ready(function($) {
 	if ( config.CONFIG_PAGE.page == 'EDITNOTE' ) {
 
 		//var NOTEID = makeid(8) ;
-		var NOTEID = `${moment().format('DD-JJ-YYYY')}-contactId-${config.CONFIG_PAGE.contactId}-noteId-${makeid(8)}`  ;
+		var NOTEID = `${moment().format('DD-MM-YYYY')}-contactId-${config.CONFIG_PAGE.contactId}-noteId-${makeid(8)}`  ;
 		console.log( NOTEID );
 
 		//initialisation de micro recorder 
@@ -269,7 +275,7 @@ jQuery(document).ready(function($) {
 	    btnAddNote.before( recordedTpl() ) ; 
 
 		//lancement de l'initialisation du timeur 
-		var chrono = timer() ;
+		chrono = timer() ;
 
 		chrono.setcallback(function ( time ) {
 			document.getElementById('counter-recorded').value = time ; 
@@ -303,13 +309,12 @@ jQuery(document).ready(function($) {
 				pre.html( tpl ) ; 
 				pre.show() ;
 
+				$('#noteSave').removeAttr('disabled') ;
+
 			}else{
 
 				//vidé d'abord le lecteur audio 
 				pre.html(' ') ; 
-
-				//lancement du chrono
-				chrono.start() ;
 				
 				startRecording( NOTEID ) ; 
 
@@ -322,7 +327,8 @@ jQuery(document).ready(function($) {
 				//$('#run-recorded').attr('disabled','disabled') ;
 				$('#run-recorded').val('stop enregistrement') ; 
 				$('#stop-recorded').attr('disabled','disabled') ;
-			
+				$('#noteSave').attr('disabled','disabled') ;
+
 			}
 
 		})
@@ -331,6 +337,7 @@ jQuery(document).ready(function($) {
 			
 			chrono.reset() ;
 			dellAllAudio( prot+'://'+serveur+port+'/delete?id='+NOTEID ) ; 
+			$('#noteSave').attr('disabled','disabled') ;
 			 
 		})
 
@@ -442,7 +449,7 @@ jQuery(document).ready(function($) {
 				//éfacer l'enregistrement précedement fait 
 				chrono.reset() ;
 
-				//await dellAllAudio( prot+'://'+serveur+port+'/delete?id='+NOTEID ) ; 
+				$('#noteSave').attr('disabled','disabled') ;
 
 				var formData = new FormData();
 				formData.append('file', ev.target.files[0] );
@@ -465,7 +472,9 @@ jQuery(document).ready(function($) {
 			    	//écoute l'audio qui é été enregistré 
 			    	let url = prot+'://'+serveur+port+'/audio/'+NOTEID +'/?token='+makeid(60) ;
 					pre.html(lecteurTpl( url , 'audio-liste-note-upload' )) ;
-					pre.show() ; 
+					pre.show() ;
+
+					$('#noteSave').removeAttr('disabled') ; 
 
 			    }
 
@@ -498,6 +507,10 @@ jQuery(document).ready(function($) {
 			}
 		})
 
+
+		//lors du premier chargement, il faux désactivé le button de création de note car c'est sur qu'il ny a pas de note par défaut 
+		$('#noteSave').attr('disabled','disabled') ;
+
 	}else if ( config.CONFIG_PAGE.page == "HOMENOTE" ) {
 		//on est dans la page ou on liste tout les notes 
 		//on ajoute le button "add note vocal" 
@@ -521,38 +534,33 @@ jQuery(document).ready(function($) {
 		fetchNoteListe() ; 
 
 	}
-
 	else if(config.CONFIG_PAGE.page =='HOMEFUSEDESK'){
 
+		var typeId = config.CONFIG_PAGE.typeId ; 
 		//caseActionTabs
 		var addbtn = false ; 
 		var btnAddNote = document.querySelector('#caseActionTabs li');
-		console.log( btnAddNote );
-		if(  btnAddNote ){
-			$(btnAddNote).after( `<li class="hidden-xs">
-					    <a onclick="window.open('https://bg456.infusionsoft.com/ContactAction/manageContactAction.jsp?isPop=true&vocaux=true&view=add&contactId=464' );" >Add Vocal Note<span class="bubble zero" data-bind="text: tags().length, css: {zero: tags().length == 0}">0</span></a>
-					</li>` ) 
-			console.log('ADD BUTTON');
-			addbtn = true ; 
-		}else{
-			//écoute l'evenement de change DOM 
-			var pages = document.querySelector( 'body' ) ; 
-			console.log( '... MUTATOR' , pages  );
-			return observeDOM( pages ,function(e){
-				var btnAddNote = document.querySelector('#caseActionTabs li.dropdown'); 
-				if(  btnAddNote && addbtn === false ){
-					$(btnAddNote).after( `<li class="hidden-xs">
-					    <a onclick="window.open('https://bg456.infusionsoft.com/ContactAction/manageContactAction.jsp?isPop=true&vocaux=true&view=add&contactId=464' );" >Add Vocal Note<span class="bubble zero" data-bind="text: tags().length, css: {zero: tags().length == 0}">0</span></a>
-					</li>` ) 
-					console.log('ADD BUTTON');
-					addbtn = true ; 
-				}
-			});
+		let contactID = '';
 
-		}
+		//écoute l'evenement de change DOM 
+		var pages = document.querySelector( 'body' ) ; 
+		console.log( '... MUTATOR' , pages  );
+		return observeDOM( pages ,function(e){
+			var btnAddNote = document.querySelector('#caseActionTabs li.dropdown');
+			let links = document.querySelector('.contact-details .header a') ; 
+			if(  btnAddNote && links && addbtn === false ){
+				let href = links.getAttribute("href");
+				console.log( href );
+				let url = new URL( href ); 
+				contactID = url.searchParams.get("ID");
+				$(btnAddNote).after( `<li class="hidden-xs">
+					<a onclick="window.open('https://${typeId}.infusionsoft.com/ContactAction/manageContactAction.jsp?isPop=true&vocaux=true&view=add&contactId=${contactID}');">Add Vocal Note</a>
+				</li>` )
+				addbtn = true ; 
+			}
+		});
 
 	}
-
 
 
 	//écoute evenement changement vitesse de lecteur audio 
@@ -602,3 +610,8 @@ jQuery(document).ready(function($) {
 });
 
 chrome.runtime.connect();
+
+//ici on écoute s'il y a un evenement du backend qui demande de fermé la fenètre encour 
+$on('force-close-tab-save-note',function () {
+	window.close()
+})
