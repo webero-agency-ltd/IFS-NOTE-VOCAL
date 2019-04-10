@@ -9,6 +9,8 @@
     "axios": "^0.17.0",
     "binaryjs-client": "^1.0.0",
     "bootstrap-vue": "^2.0.0-rc.9",
+    "busboy": "^0.3.0",
+    "connect-busboy": "0.0.2",
     "dexie": "^2.0.3",
     "element-ui": "^2.0.1",
     "emojionearea": "^3.4.1",

@@ -1,44 +1,116 @@
-import {BinaryClient} from 'binaryjs-client';
+
+import { BinaryClient } from 'binaryjs-client';
 import recordRTC from 'recordRTC';
-import {wav} from 'wav';
+import { wav } from 'wav';
 
-let serveur = '127.0.0.1' ; 
+import co from '../libs/config';
+import makeid from '../libs/makeid';
+import { recordedTpl , lecteurTpl , selectTpl , areaTpl } from '../libs/tpl';
+import timer from '../libs/timer';
+import { title , soncas , produit } from '../libs/select';
+import wait from '../libs/wait';
+import { $on , $emit } from '../libs/event';
 
+import moment from 'moment' ; 
+
+var ready = false ; 
+//vérification si le navigateur supporte l'enregistrement audio 
+if (!navigator.getUserMedia)
+  	navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia ||
+	navigator.mozGetUserMedia || navigator.msGetUserMedia;
+
+if (navigator.getUserMedia) 
+	ready = true ;  
+else 
+	ready = false ;  
+
+var config = co() ; 
+
+let serveur = config.URL ;  
+
+let port = config.PORT ; 
+
+let prot = config.PROT ;  
+
+
+//mini plugin jquery pour ajouter un event play adu audio 
+jQuery.createEventCapturing = (function () {
+    var special = jQuery.event.special;
+    return function (names) {
+        if (!document.addEventListener) {
+            return;
+        }
+        if (typeof names == 'string') {
+            names = [names];
+        }
+        jQuery.each(names, function (i, name) {
+            var handler = function (e) {
+                e = jQuery.event.fix(e);
+
+                return jQuery.event.dispatch.call(this, e);
+            };
+            special[name] = special[name] || {};
+            if (special[name].setup || special[name].teardown) {
+                return;
+            }
+            jQuery.extend(special[name], {
+                setup: function () {
+                    this.addEventListener(name, handler, true);
+                },
+                teardown: function () {
+                    this.removeEventListener(name, handler, true);
+                }
+            });
+        });
+    };
+})();
+
+//écouter si un élement du dom change 
+var observeDOM = (function(){
+    var MutationObserver = window.MutationObserver || window.WebKitMutationObserver,
+        eventListenerSupported = window.addEventListener;
+    return function(obj, callback){
+        if( MutationObserver ){
+     
+            var obs = new MutationObserver(function(mutations, observer){
+                if( mutations[0].addedNodes.length || mutations[0].removedNodes.length )
+                    callback();
+            });
+     
+            obs.observe( obj, { childList:true, subtree:true });
+        }
+        else if( eventListenerSupported ){
+            obj.addEventListener('DOMNodeInserted', callback, false);
+            obj.addEventListener('DOMNodeRemoved', callback, false);
+        }
+    };
+})();
+
+
+//si cette valeur est = true, on fait l'enregistrement automatique des flux audio au serveur 
 var recording = false;
 
-chrome.runtime.onMessage.addListener(function (msg, sender, response) {
-	
-	if (msg.name=='connexion-soket-note-vocaux') {
-		recording = true;
-	}
-
-});
+//écoute si un evenement dans le backend est lancer 
+//le nom de l'évenement a écoute est connexion-soket-note-vocaux
+$on('connexion-soket-note-vocaux',function (argument) {
+	recording = true;
+})
 
 //l'ancer l'enregistrement de song
-window.startRecording = function( filename ) {
-
-	totalSeconds = 0 ; 
-	clearInterval( intervaleTimerRecorder ) ;
-	intervaleTimerRecorder = setInterval(setTime, 1000);
+function startRecording ( NOTEID ) { 
+	
     $('#run-recorded').removeAttr('disabled') ;
-    chrome.runtime.sendMessage({
-	  	name:   'connexion',
-	  	data:   filename, 
-	});
+
+    $emit('connexion' , { NOTEID , type : 'infusionsoft' , typeId : config.CONFIG_PAGE.typeId , contactId : config.CONFIG_PAGE.contactId }) ; 
 
 }
 
 //stoper l'enregistrement 
-window.stopRecording = function() {
+function stopRecording () {
   	
   	recording = false;
-  	totalSeconds = 0 ;
-  	//window.Stream.end();
-  	clearInterval( intervaleTimerRecorder ) ;
-  	//window.stream_client.close() ; 
-  	chrome.runtime.sendMessage({
-	  	name:   'save-stream',
-	});
+
+	$emit('save-stream' , null ) ; 
 
 }
 
@@ -48,11 +120,8 @@ function recorderProcess(e) {
     console.log ('recording');
 
   	var left = e.inputBuffer.getChannelData(0);
-  	//window.Stream.write(convertFloat32ToInt16());
-  	chrome.runtime.sendMessage({
-	  	name:   'stream',
-	  	data:   [...left],
-	});
+
+	$emit('stream' , [...left] ) ; 
   	
 }
 
@@ -61,161 +130,194 @@ var context = null ;
 function initializeRecorder(stream) {
 	
 	var audioContext = window.AudioContext;
+
 	context = new audioContext();
+	
 	var audioInput = context.createMediaStreamSource(stream);
 	var bufferSize = 2048;
-	// create a javascript node
 	var recorder = context.createScriptProcessor(bufferSize, 1, 1);
-	// specify the processing function
+	
 	recorder.onaudioprocess = recorderProcess;
-	// connect stream to our recorder
+
 	audioInput.connect(recorder);
-	// connect our recorder to the previous destination
 	recorder.connect(context.destination);
 
 }
 
-async function stopRecorded() {
+function pauseall() {
 	
-	await context.close();
+	let audios = document.getElementsByTagName("audio") ; 
 
-}
-
-//si on est dans la popup d'ajout de note 
-		
-var recorderInput = `<div class="fieldContainer fieldContainerMargin">
-    <div class="fieldLabel">
-        <label class="action-label" for="template">Vocaux</label>
-    </div>
-    <div class="fieldControl">
-        <div style="display: flex;">
-        	<div style="display: flex;">
-    			<div id="logo-recorded" class="recorder-style"></div>
-        		<input id="counter-recorded" class="fieldControlWidth" style="width: 100px; margin-left: 6px;" disabled="disabled" id="timer" name="timer" type="text" value="00:00">
-        	</div>
-            <div style="display: flex;">
-            	<input class="inf-button btn button-x" id="run-recorded" name="runrecorded" type="button" value="Enregistré">
-            	<input disabled="disabled" class="inf-button btn button-x" id="stop-recorded" name="resetrecorded" type="button" value="Effacté">
-            </div>
-        </div>
-    </div>
-    <style>
-    	
-    	.recorder-style{
-			width: 26px;
-			height: 26px;
-			border-radius: 26px; 
-			background-color: #999 ; 
-    	}
-
-    	.recorder-style.active{
-			background-color: red ;
-    	}
-
-    </style>
-
-</div>`;
-
-
-var totalSeconds = 0;
-var intervaleTimerRecorder = null ; 
-
-function setTime() {
-  	
-  	++totalSeconds;
-  	var secondsLabel = pad(totalSeconds % 60);
-  	var minutesLabel = pad(parseInt(totalSeconds / 60));
-  	document.getElementById('counter-recorded').value = minutesLabel + " : " + secondsLabel ; 
-
-}
-
-function pad(val) {
-	
-	var valString = val + "";
-	if (valString.length < 2) {
-	    return "0" + valString;
-	} else {
-	    return valString;
+	for (var i = 0; i < audios.length; i++) {
+		audios[0].pause() 
 	}
 
 }
 
-function makeid(length) {
+//delete audio
+async function dellAllAudio( url ) {
 
-  	var text = "";
-  	var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-
-  	for (var i = 0; i < length; i++)
-    	text += possible.charAt(Math.floor(Math.random() * possible.length));
-
-  	return text;
+	pauseall() ; 
+	//cacher le préécoute 
+	$('#pre-ecoute-vocaux').hide() ; 
+	$( this ).attr('disabled','disabled') ;
+	//supression de ce fichier dans le serveur 
+	return await fetch( url )  ;
 
 }
 
 
+
+function fetchNoteListe(argument) {
+
+	var noteListe = $('.noteContentText') ; 
+	
+	console.log( noteListe );
+	
+	noteListe.each(function ( index , e ) {
+		
+		var text = $(this).text().trim() ; 
+		if ( text.indexOf('NOTEID::') >= 0 ) {
+
+			let repl = text.replace(new RegExp('\r?\n','g'), '<br />'); ; 
+			var sdsd = /NOTEID::(.*)::NOTEID(.*)/gi;
+			var s = sdsd.exec(repl);
+			let ID = '' ; 
+			let html = '' ; 
+			if ( s[1] ) {
+				ID = s[1] ; 
+			}
+			if ( s[2] ) {
+				html = s[2] ; 
+			}
+
+			console.log( '-------' );
+			console.log( repl , html );
+
+			let url = prot+'://'+serveur+port+'/audio/'+ID ; 
+			$(this).html( `<a target="_blank" href="${url}">${url}</a></br> 
+				${lecteurTpl( url , 'audio-liste-note-'+index )}
+				<div>${html}</div>` ) ; 
+
+		}
+
+	})
+
+}
+
+function formatDesc( NOTEID , selectSoncas , selectProduit , comment ) {
+
+	let note = '' ; 
+	let notes = $('#notes') ; 
+	let notecontent = notes.parents('.fieldContainer') ; 
+	notecontent.hide() ; 
+
+	if ( notes ) {
+		
+		note += 'NOTEID::'+NOTEID+'::NOTEID'  ; 
+		let soncas_text = '' ; 
+		
+		if(selectSoncas.length){
+			note += "\n"+" SONCAS : \n" ;
+			let soncas_liste = soncas() ; 
+			soncas_liste.forEach(function ( e, i ) {
+				if( selectSoncas.includes( ""+i ) ){
+					note += '- '+ e +"\n" ; 
+				}
+			})
+		}
+		
+		if(selectProduit.length){
+			note += "\n"+" Produit :"+"\n" ;
+			let produit_liste = produit() ; 
+			produit_liste.forEach(function ( e, i ) {
+				if( selectProduit.includes( ""+ i ) ){
+					note += '- '+ e +"\n" ; 
+				}
+			})
+		}
+
+		if ( comment ) {
+			note += "\n"+' Commentaire: '+"\n" ; 
+			note += comment+"\n" ; 	
+		}
+		
+		notes.html( note += "\n" ) ; 
+
+	}
+
+}	
+
 jQuery(document).ready(function($) { 
 
-	//Touver un moyen d'injecté une seule foix le button 
-
-	var currentLocation = window.location;
-	var url_string = currentLocation ; 
-	var url = new URL(url_string);
-	var c = url.searchParams.get("c");
-	var isPop = url.searchParams.get("isPop");
-	var vocaux = url.searchParams.get("vocaux");
-	var ID = url.searchParams.get("ID");
-	var contactId = url.searchParams.get("contactId");
-
-	if (currentLocation.pathname=='/ContactAction/manageContactAction.jsp'&&vocaux) {
-		
-		var today = new Date();
-		var dd = today.getDate();
-		var mm = today.getMonth() + 1; //January is 0!
-
-		var yyyy = today.getFullYear();
-		if (dd < 10) {
-		  	dd = '0' + dd;
-		} 
-		if (mm < 10) {
-		  	mm = '0' + mm;
-		} 
-		var today = dd + '-' + mm + '-' + yyyy;
-
-		var filename = today+'-contact_id-'+contactId+'-md5-'+makeid(5) ;
-
-		if (!navigator.getUserMedia)
-	      	navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia ||
-	    	navigator.mozGetUserMedia || navigator.msGetUserMedia;
-
-	    if (navigator.getUserMedia) {
-	      	navigator.getUserMedia({audio:true}, initializeRecorder, function(e) {
-	        	alert('une erreur est survenue');
-	      	});
-	    } else {
-	    	return alert('getUserMedia non pris en charge par ce navigateur.');
-	    }
-		
-	  	//Injection des donner dans le modal infusionsoft d'édition de note
-
-		var btnAddNote = $('#template').parents('.fieldContainer');
-
-	    btnAddNote.before( recorderInput ) ; 
-
-		var session = {
-		  	audio: true,
-		  	video: false
-		};
+	if( ! ready )
+		return alert('getUserMedia non pris en charge par ce navigateur.');
 	
-		$('body').on('click','#run-recorded',function (argument) {
+	if ( config.CONFIG_PAGE.page == 'EDITNOTE' ) {
+
+		//var NOTEID = makeid(8) ;
+		var NOTEID = `${moment().format('DD-JJ-YYYY')}-contactId-${config.CONFIG_PAGE.contactId}-noteId-${makeid(8)}`  ;
+		console.log( NOTEID );
+
+		//initialisation de micro recorder 
+	    navigator.getUserMedia({audio:true}, initializeRecorder, function(e) {
+        	alert('une erreur est survenue');
+      	});
+		
+	  	//Ajout du template d'enregistrement dans infusionsoft
+		var btnAddNote = $('#template').parents('.fieldContainer');
+	    btnAddNote.before( recordedTpl() ) ; 
+
+		//lancement de l'initialisation du timeur 
+		var chrono = timer() ;
+
+		chrono.setcallback(function ( time ) {
+			document.getElementById('counter-recorded').value = time ; 
+			console.log( ' ---- Timer call ', time );
+		}) 
+
+		$('body').on('click','#run-recorded', async function (argument) {
+
+			console.log('---CLICK : ' , recording );
+
+			let pre = $('#pre-ecoute-vocaux') ; 
+
+			pauseall() ;
 
 			if ( recording ) {
-				window.stopRecording() ; 
+
+				//stop chrono
+				chrono.stop() ; 
+				 
+				stopRecording() ; 
+
 				$('#logo-recorded').removeClass('active')
 				$('#stop-recorded').removeAttr('disabled') ;
 				$('#run-recorded').val('Enregistré') ; 
+				
+				//affichage du préécoute 
+				
+				let url = prot+'://'+serveur+port+'/audio/'+NOTEID +'/?token='+makeid(60) ;
+				let tpl = lecteurTpl( url , 'audio-liste-note-recordin' ) ; 
+				console.log( tpl , pre );
+				pre.html( tpl ) ; 
+				pre.show() ;
 
 			}else{
-				window.startRecording( filename ) ; 
+
+				//vidé d'abord le lecteur audio 
+				pre.html(' ') ; 
+
+				//lancement du chrono
+				chrono.start() ;
+				
+				startRecording( NOTEID ) ; 
+
+				var el = pre.find('.audio-controller') ; 
+				if (el.length) {
+					el.remove() ; 
+				}
+
 				$('#logo-recorded').addClass('active') ;  
 				//$('#run-recorded').attr('disabled','disabled') ;
 				$('#run-recorded').val('stop enregistrement') ; 
@@ -227,29 +329,22 @@ jQuery(document).ready(function($) {
 
 		$('body').on('click','#stop-recorded', async function (argument) {
 			
-			totalSeconds = 0 ; 
-			$( this ).attr('disabled','disabled') ;
-			//supression de ce fichier dans le serveur 
-			await fetch('http://'+serveur+':3700/delete?filename='+filename) ;
+			chrono.reset() ;
+			dellAllAudio( prot+'://'+serveur+port+'/delete?id='+NOTEID ) ; 
 			 
 		})
 
 		//ici on fait la modifici ation des valeurs boutton 
 		$('#actionType').html('<option>Message Vocal</option>') 
 
-		var dataTitle = [
-			'Résumé après appel commercial Aumscan 3',
-			'Résumé après appel commercial Aumscan 4',
-			'Résumé après appel commercial Cardiaum',
-			'Résumé après SAV Logiciel Aumscan 3',
-			'Résumé après SAV matériel Aumscan 4',
-			'Résumé après Présentation Zoom Aumscan 3',
-		]
+		var dataTitle = title() ; 
+
 		//changement des titre
 		var allOptionTile = dataTitle.map(function ( e , i ) {
 			return  `<option value="${i}">${e}</option>` ; 
 		}) ; 
 
+		//ajoute du liste de titre du note pour facilité la selection 
 		var sujet = $('#subject') ; 
 		if ( sujet.length ) {
 			//on ajoute la liste d'option des titres 
@@ -260,6 +355,55 @@ jQuery(document).ready(function($) {
 		
 		}
 
+		//ajoute desu autre différent input de selection 
+		var sujetParent  = sujet.parents('.fieldContainer') ; 
+		if ( sujetParent ) {
+
+			let soncas_liste = soncas() ; 
+			let soncasOp = soncas_liste.map(function ( e , i ) {
+				return  `<option value="${i}">${e}</option>` ; 
+			}) ; 
+
+			let produit_liste = produit() ; 
+			let produitOp = produit_liste.map(function ( e , i ) {
+				return  `<option value="${i}">${e}</option>` ; 
+			}) ; 
+
+			sujetParent.after( areaTpl('commentaire' , '' , 'comment' ) ) ;
+			sujetParent.after( selectTpl('produit' , produitOp , 'produit-select' , true  ) ) ;
+			sujetParent.after( selectTpl('soncas' , soncasOp , 'soncas-select' , true ) ) ;
+
+			let comment = '' ; 
+			let selectProduit = [] ; 
+			let selectSoncas = [] ; 
+			//écoute le changement de l'un de ces element pour faire le formatage du text dans infusionnote description
+			$('body').on('input','#comment',function ( e ) {
+				//si on ajoute ou éfface une commentaire 
+				comment = $(this).val() ; 
+				formatDesc( NOTEID , selectSoncas , selectProduit , comment ) ; 
+				console.log( comment );
+			})
+
+			$('body').on('input','#produit-select',function ( e ) {
+				//si on select ou désélect un produit 
+				selectProduit  = $(this).val() ; 
+				formatDesc( NOTEID , selectSoncas , selectProduit , comment ) ; 
+				console.log( 'produit : ' , selectProduit );
+			})
+
+			$('body').on('input','#soncas-select',function ( e ) {
+				//si on select ou désélect un soncas 
+				selectSoncas  = $(this).val() ; 
+				formatDesc( NOTEID , selectSoncas , selectProduit , comment ) ; 
+				console.log( 'soncas : ' , selectSoncas );
+			})
+
+			formatDesc( NOTEID , selectSoncas , selectProduit , comment ) ; 
+
+		}
+
+		//écoute le changement de l'input titre et s'il y a de quelconque modification, on fait le changement 
+		//de l'input d'origine 
 		$('body').on('change','#subject-title',function ( e ) {
 			
 			var index = $(this).val() ; 
@@ -268,33 +412,193 @@ jQuery(document).ready(function($) {
 			}
 
 		})
-		
-		$('#notes').val('NOTEVOCAUX::'+filename) ; 
 
-	}else if ( currentLocation.pathname=='/Contact/manageContact.jsp'&&!isPop ) {
-		//on est dans la page ou on liste tout les notes 
-		//on ajoute le button "add note vocal" 
-		var btnAddNote = document.querySelector('#TemplateId + input');
-		if ( btnAddNote ) {
-			$(btnAddNote).after( '<input onclick="Infusion.Popup.open(\'/ContactAction/manageContactAction.jsp?isPop=true&vocaux=true&view=add&contactId='+ID+'\' , {height: 730,width: 730})" id="ifs-note-vocaux" class="inf-button btn" type="button" value="add note vocaux">' ) 
-			//écoute lors du clicque sur l'élement 	
-		}
+		$('body').on('change','#audio-upload',async function (ev) {
+			
+			if ( ev.target.files.length ) {
 
-		var noteListe = $('.noteContentText') ; 
-		console.log( noteListe );
-		noteListe.each(function (e) {
+				let pre = $('#pre-ecoute-vocaux') ; 
 
-			var text = $(this).text().trim() ; 
-			if ( text.indexOf('NOTEVOCAUX::') >= 0 ) {
-				text = text.replace(/NOTEVOCAUX::/gi, '')
-				console.log(text);
-				$(this).html( '<a href="http://'+serveur+':3700/audio/'+text+'">http://'+serveur+':3700/audio/'+text+'</a></br> <audio style="height: 30px;" src="http://'+serveur+':3700/audio/'+text+'" preload="auto" controls="" loop=""></audio>' ) ; 
+				pre.html('') ; 
+
+				if ( recording ) {
+
+					//stop chrono
+					chrono.stop() ; 
+					 
+					stopRecording() ; 
+
+					$('#logo-recorded').removeClass('active')
+					$('#stop-recorded').removeAttr('disabled') ;
+					$('#run-recorded').val('Enregistré') ; 
+
+				}
+
+				//tout les button ne son pa utilisable si on est encore dans un processu d'upload de fichier
+				$('#upload-file-btn').attr('disabled','disabled') ;
+				$('#stop-recorded').attr('disabled','disabled') ;
+				$('#run-recorded').attr('disabled','disabled') ;
+
+				//éfacer l'enregistrement précedement fait 
+				chrono.reset() ;
+
+				//await dellAllAudio( prot+'://'+serveur+port+'/delete?id='+NOTEID ) ; 
+
+				var formData = new FormData();
+				formData.append('file', ev.target.files[0] );
+
+				//faire l'uploade automatiquement 
+				var uploadResponse = await fetch(prot+'://'+serveur+port+'/upload?id='+NOTEID+'&type=infusionsoft&typeId='+config.CONFIG_PAGE.typeId+'&contactId='+config.CONFIG_PAGE.contactId , {
+				    method: 'POST',
+				    headers: {
+				      	//'Content-Type': 'multipart/form-data'
+				    },
+				    body: formData
+				})
+
+				$emit('upload', prot+'://'+serveur+port+'/close?id='+NOTEID )
+
+				if ( uploadResponse.ok ) { 
+
+					let data = await uploadResponse.json() ; 
+			    	console.log( data );
+			    	//écoute l'audio qui é été enregistré 
+			    	let url = prot+'://'+serveur+port+'/audio/'+NOTEID +'/?token='+makeid(60) ;
+					pre.html(lecteurTpl( url , 'audio-liste-note-upload' )) ;
+					pre.show() ; 
+
+			    }
+
+			    //Tout les button son de nouveaux clicable 
+				setTimeout(function (argument) {
+					$('#stop-recorded').removeAttr('disabled') ;
+			    	$('#upload-file-btn').removeAttr('disabled') ;
+					$('#run-recorded').removeAttr('disabled') ;
+				}, 1000);
+
 			}
 
 		})
 
+		//ICI on veut faire l'upload de fichier 
+		$('body').on('click','#upload-file-btn',function () {
+			$('#audio-upload').trigger('click') ; 
+		})
+
+		//clique sur enregistrement des notes 
+		$('body').on('click','#noteSave',function () {
+			
+			if ( recording ) {
+				stopRecording() ;
+				setTimeout(function (argument) {
+					fetch(prot+'://'+serveur+port+'/save?id='+NOTEID) ;
+				}, 700);
+			}else{
+				fetch(prot+'://'+serveur+port+'/save?id='+NOTEID) ;
+			}
+		})
+
+	}else if ( config.CONFIG_PAGE.page == "HOMENOTE" ) {
+		//on est dans la page ou on liste tout les notes 
+		//on ajoute le button "add note vocal" 
+		var btnAddNote = document.querySelector('#TemplateId ~ input');
+		if ( btnAddNote ) {
+			$(btnAddNote).after( '<input onclick="Infusion.Popup.open(\'/ContactAction/manageContactAction.jsp?isPop=true&vocaux=true&view=add&contactId='+config.CONFIG_PAGE.contactId+'\' , {height: 730,width: 730})" id="ifs-note-vocaux" class="inf-button btn" type="button" value="Add Vocal Note">' ) 
+			//écoute lors du clicque sur l'élement 	
+		}
+
+		fetchNoteListe() ; 
+
+	}else if ( config.CONFIG_PAGE.page == 'HOMENOTEMODALE' ) {
+		//on est dans la page ou on liste tout les notes 
+		//on ajoute le button "add note vocal" 
+		var btnAddNote = document.querySelector('#TemplateId_select ~ input ');
+		if ( btnAddNote ) {
+			$(btnAddNote).after( '<input onclick="Infusion.Popup.open(\'/ContactAction/manageContactAction.jsp?isPop=true&vocaux=true&view=add&contactId='+config.CONFIG_PAGE.contactId+'\' , {height: 730,width: 730})" id="ifs-note-vocaux" class="inf-button btn" type="button" value="Add Vocal Note">' ) 
+			//écoute lors du clicque sur l'élement 	
+		}
+
+		fetchNoteListe() ; 
+
 	}
+
+	else if(config.CONFIG_PAGE.page =='HOMEFUSEDESK'){
+
+		//caseActionTabs
+		var addbtn = false ; 
+		var btnAddNote = document.querySelector('#caseActionTabs li');
+		console.log( btnAddNote );
+		if(  btnAddNote ){
+			$(btnAddNote).after( `<li class="hidden-xs">
+					    <a onclick="window.open('https://bg456.infusionsoft.com/ContactAction/manageContactAction.jsp?isPop=true&vocaux=true&view=add&contactId=464' );" >Add Vocal Note<span class="bubble zero" data-bind="text: tags().length, css: {zero: tags().length == 0}">0</span></a>
+					</li>` ) 
+			console.log('ADD BUTTON');
+			addbtn = true ; 
+		}else{
+			//écoute l'evenement de change DOM 
+			var pages = document.querySelector( 'body' ) ; 
+			console.log( '... MUTATOR' , pages  );
+			return observeDOM( pages ,function(e){
+				var btnAddNote = document.querySelector('#caseActionTabs li.dropdown'); 
+				if(  btnAddNote && addbtn === false ){
+					$(btnAddNote).after( `<li class="hidden-xs">
+					    <a onclick="window.open('https://bg456.infusionsoft.com/ContactAction/manageContactAction.jsp?isPop=true&vocaux=true&view=add&contactId=464' );" >Add Vocal Note<span class="bubble zero" data-bind="text: tags().length, css: {zero: tags().length == 0}">0</span></a>
+					</li>` ) 
+					console.log('ADD BUTTON');
+					addbtn = true ; 
+				}
+			});
+
+		}
+
+	}
+
+
+
+	//écoute evenement changement vitesse de lecteur audio 
+	$('body').on('click','.speed-fan',function ( e ) {
+		
+		e.stopPropagation() ; 
+		e.preventDefault() ;
+
+		var el = $( this ) ; 
+		var id = el.data('id') ; 
+		var value = el.data('value') ;
+
+		var od = document.getElementById( id ) ; 
+
+		od.playbackRate = value ; 
+		
+		$('.'+id+'core .speed-fan').removeClass('active') ; 
+		el.addClass('active') ; 
+
+	})
+
+	//si le lécteur audio est en play, on affiche son 
+	jQuery.createEventCapturing(['play','pause']);  
+	
+	$('body').on('play', 'audio', function(){
+
+		var el = $( this ) ; 
+		let id = el.data('id') ; 
+		
+		var elCtrl = $('.'+id) ;
+		elCtrl.show() ; 
+
+	})
+
+
+	$('body').on('pause', 'audio', function(){
+
+		var el = $( this ) ; 
+		let id = el.data('id') ; 
+		
+		var elCtrl = $('.'+id) ;
+		elCtrl.hide() ;  
+
+	})
+
 
 });
 
-
+chrome.runtime.connect();

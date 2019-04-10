@@ -1,25 +1,32 @@
+
 var express = require('express');
 var BinaryServer = require('binaryjs').BinaryServer;
 var fs = require('fs');
 var wav = require('wav');
+let Busboy = require('busboy');
 
-var port = 3700;
+let env = 'local' ; 
+
 var app = express();
 var path = require('path') ; 
 
-var https = require('http') ;
+var http = require('http') ;
+
+var https = require('https') ;
+var stores = require('./libs/stores');
 
 app.set('views', path.join(__dirname, '/tpl'));
 
-app.set('view enginer','ejs')
+app.set('view enginer','ejs') ; 
 
-app.use(express.static(__dirname + '/public'))
+app.use(express.static(__dirname + '/public')) ; 
 
-var options = {
-	//key: fs.readFileSync("/etc/letsencrypt/archive/therapiequantique.net/privkey1.pem"),
-    //cert: fs.readFileSync("/etc/letsencrypt/archive/therapiequantique.net/fullchain1.pem"),
-    //ca: fs.readFileSync("/etc/letsencrypt/archive/therapiequantique.net/chain1.pem"),
-};
+var openfile = [] ; 
+
+http.createServer(function(req, res) {   
+    res.writeHead(301, {"Location": "https://" + req.headers['host'] + req.url});
+    res.end();
+}).listen(80);
 
 // Add headers
 app.use(function (req, res, next) {
@@ -51,83 +58,117 @@ app.get('/audio/:filename', function(req, res){
 			return res.send('Fichier pas trouver');
 		}
 
-		var stat = fs.statSync(filePath);
+	    ////////////////////////////////////////////////////
 
-		res.writeHead(200, {
-	        'Content-Type': 'audio/mpeg',
-	        'Content-Length': stat.size
-	    });
+	    stat = fs.statSync(filePath);
 
-	    return fs.createReadStream(filePath).pipe(res);
-	
+	    const fileSize = stat.size;
+	    const range = req.headers.range;
+	    const id = req.param("filename") ; 
+ 
+	    if (range) {
+		    const parts = range.replace(/bytes=/, "").split("-");
+		    const start = parseInt(parts[0], 10);
+		    const end = parts[1] 
+		        ? parseInt(parts[1], 10)
+		        : fileSize - 1;
+		    const chunksize = (end - start) + 1;
+		    let readStream = fs.createReadStream(filePath, { start, end });
+		    const head = {
+		        'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+		        'Accept-Ranges': 'bytes',
+		        'Content-Length': chunksize,
+		        'Content-Type': 'video/mp4',
+		    };
+		    res.writeHead(206, head);
+
+		    let is = openfile.filter( e => e.id==id?true:false );
+		    if ( is.length == 0 ) {
+		    	openfile.push({id, stream : readStream }) ;
+		    }
+		 
+		    readStream.pipe(res);
+	    } else {
+		    const head = {
+		        'Content-Length': fileSize,
+		        'Content-Type': 'video/mp4',
+		    };
+	      	res.writeHead(200, head);
+	      	let stream = fs.createReadStream(filePath)
+	    
+	      	let is = openfile.filter( e => e.id==id?true:false );
+		    if ( is.length == 0 ) {
+		    	openfile.push({id, stream : stream }) ;
+		    }
+
+	      	stream.pipe(res);
+	    
+	    }
+
+	    ////////////////////////////////////////////////////
+
+	    return true; 
+	    
 	}
 
 	return res.send('Fichier pas trouver');
 
+});
+ 
+//ici on a le fichier et on fait l'upload
+app.post('/upload', async function(req, res){
+
+	var { id , type , typeId , contactId } = req.query ; 
+
+	var index = null ; 
+	
+	let deletefile = openfile.filter( function ( e , i ) {
+		index = i ; 
+		return e.id==id?true:false;
+	}); 
+
+
+	console.log( deletefile , openfile , id );
+
+	if ( deletefile.length ) {
+		
+		deletefile[0].stream.destroy();
+		openfile.splice(index, 1);
+	}
+
+	var busboy = new Busboy({ headers: req.headers });
+
+	var filePath = path.join(__dirname, '/notes/') + id + '.wav' ; 
+
+	console.log('--- START UPLOAD');
+
+	await stores.createNote( id , filePath , type , typeId , contactId ) ; 
+
+    busboy.on('file', function (fieldname, file, filename, encoding, mimetype) {
+
+	    file.pipe(fs.createWriteStream(filePath)); 
+
+	})
+	
+	busboy.on('finish', async function () {
+    	
+    	await stores.endNote( id ) ;
+        res.status(200).json({ 'message': "File uploaded successfully." });
+    
+    });
+
+    return req.pipe(busboy);
 
 });
+
 
 //enregistré le document enregistré 
-app.get('/save', function(req, res){
+app.get('/save', async function(req, res){
 	
-	if ( req.query.filename ) {
-		//enregistrement du fichier 
-		var file = path.join( __dirname,'./listes.json' ) ; 
+	if ( req.query.id ) {
 
-		var liste = [] ; 
-
-		if ( fs.existsSync( file ) ) {
-
-			var i = fs.readFileSync( file ).toString(); 
-			liste = JSON.parse(i) ;
-		}
-
-		console.log( liste );
-
-		liste = liste.map((e) => {
-      		return e.file == req.query.filename ? {...e, save : true } : { ...e }
-      	})
-      	
-      	fs.writeFileSync( file , JSON.stringify(liste) , 'utf8' ) ;
-		//liste.forEatch()
-
-	}
-	res.json({success:true}) ; 
-
-});
-
-app.get('/delete', function(req, res){
-	
-	if ( req.query.filename ) {
-		 
-		var file = path.join( __dirname,'./listes.json' ) ; 
-
-		var liste = [] ; 
-
-		if ( fs.existsSync( file ) ) {
-
-			var i = fs.readFileSync( file ).toString(); 
-			liste = JSON.parse(i) ;
-		}
-
-		liste = liste.filter((e) => {
-      		return e.file == req.query.filename.trim() +'.wav' ? false : true ; 
-      	})
-
-		console.log( liste ,req.query.filename  );
-      	
-      	let file_delete = path.join(__dirname, '/notes/') + req.query.filename.trim() +'.wav' ; 
-
-      	if ( fs.existsSync( file_delete ) ) {
-
-      		fs.unlink( file_delete , function (err) {
-		    	if (err) throw err;
-		    	console.log('delete file') ; 
-		    });  
-
-      	}
-
-      	fs.writeFileSync( file , JSON.stringify(liste) , 'utf8' ) ;
+		console.log('---ENREGIsTREMENT DE CETTE NOTE');
+		await stores.saveNote( req.query.id ) ; 
 
 	}
 
@@ -135,45 +176,114 @@ app.get('/delete', function(req, res){
 
 });
 
-app.listen(port);
 
-//var server =  https.createServer(options, app).listen(port);
+app.get('/close', async function(req, res){
+	
+	if ( req.query.id ) {
+
+		let id = req.query.id.trim() ; 
+
+		if ( stores.findNoteNotSave( id ) ) {
+      		
+      		console.log('---- VOCAL ENRGISTRE CORRECTEMENET MAIS NOTE PAS PRISE EN CHARGE');
+    		
+    		var index = null ; 
+			let deletefile = openfile.filter( function ( e , i ) {
+				index = i ; 
+				return e.id==id?true:false;
+			}); 
+
+			if ( deletefile.length ) {
+				deletefile[0].stream.destroy();
+				openfile.splice(index, 1);
+			}
+
+    		await stores.deleteNote( id ) ;
+    	
+    	}
+
+	}
+
+	res.json({success:true}) ; 
+
+});
+
+
+app.get('/delete', async function(req, res){
+	
+	if ( req.query.id ) {
+
+		var index = null ; 
+
+		let deletefile = openfile.filter( function ( e , i ) {
+			index = i ; 
+			return e.id==req.query.id?true:false;
+		}); 
+
+		console.log( '--------------delete:::', deletefile.length );
+		if ( deletefile.length ) {
+			console.log('ANATINy');
+			deletefile[0].stream.destroy();
+			openfile.splice(index, 1);
+            await stores.deleteNote( req.query.id ) ; 
+		}
+
+	}
+
+	res.json({success:true}) ;
+
+
+});
+
+var port = 443;
+var server = null ;  
+
+if ( env =='local' ) {
+	port = 4434;
+	server =  http.createServer( app ).listen(port);
+}else{
+	var options = {
+		key: fs.readFileSync("/etc/letsencrypt/archive/therapiequantique.net/privkey1.pem"),
+	    cert: fs.readFileSync("/etc/letsencrypt/archive/therapiequantique.net/fullchain1.pem"),
+	    ca: fs.readFileSync("/etc/letsencrypt/archive/therapiequantique.net/chain1.pem"),
+	};
+	server =  https.createServer(options, app).listen(port);
+}
 
 console.log('server open on port ' + port );
 
-binaryServer = BinaryServer({ port: 9001 });
+binaryServer = BinaryServer({ server , port: 9001 });
 
-binaryServer.on('connection', function(client) {
+binaryServer.on('connection', async function(client) {
 
   	var url_string = require('url').parse( "http://www.example.com/socket/"+client._socket.upgradeReq.url,true).query;  
-	var nameFile = url_string.nameFile ;
-  	console.log('new connection---',url_string );
+	
+	var { id , type , typeId , contactId } = url_string ; 
 
-	if(!nameFile) return ; 
+  	console.log('new connection---', id , type , typeId , contactId  );
 
-	nameFile +='.wav'; 
+	if( !id ) return ; 
 
-	var closeFile = false ; 
+	let index = null ;
+	let deletefile = openfile.filter( function ( e , i ) {
+		index = i ; 
+		return e.id==id?true:false;
+	}); 
 
-	var realpahtFile = path.join(__dirname, '/notes/') + nameFile ; 
-	console.log( '---NAME FILE' , realpahtFile ) ;
+	if ( deletefile.length ) {
+		console.log('------------DELETE STREAM');
+		deletefile[0].stream.destroy();
+		openfile.splice(index, 1);
+	}
+
+	var nameFile = id+ '.wav' ; 
+
+	var pathFile = path.join(__dirname, '/notes/') + nameFile ; 
 
 	//ajoute dans le data json
-	
-	var file = path.join( __dirname,'./listes.json' ) ; 
-	var liste = [] ; 
+	await stores.createNote( id , pathFile , type , typeId , contactId ) ; 
 
-	if ( fs.existsSync( file ) ) {
-
-		var i = fs.readFileSync( file ).toString(); 
-		liste = JSON.parse(i) ;
-	}
-		
-	liste.push({ file : nameFile , save : false })
-
-	fs.writeFileSync( file , JSON.stringify(liste) , 'utf8' ) ;
-
-  	var fileWriter = new wav.FileWriter( realpahtFile , {
+  	var fileWriter = new wav.FileWriter( pathFile , {
     	channels: 1,
     	sampleRate: 48000,
     	bitDepth: 16
@@ -184,46 +294,57 @@ binaryServer.on('connection', function(client) {
     	console.log('new stream');
     	stream.pipe(fileWriter);
 
-	    stream.on('end', function() {
+	    stream.on('end', async function() {
 	      	
 	      	fileWriter.end();
-	      	console.log('wrote to file ' + nameFile);
-
-	      	liste = liste.map((e) => {
-	      		return e.file == nameFile ? {...e, save : true } : { ...e }
-	      	})
+	      	console.log('Close file End file ' + nameFile);
+			await stores.endNote( id ) ; 
 	      	
-	      	fs.writeFileSync( file , JSON.stringify(liste) , 'utf8' ) ;
-
 	    });
   	
   	});
 
-  	client.on('close', function() {
-		
-		//suprime le fichier audio s'i nes pas cloture correctement 
-		let soundNonSave = liste.filter((e) => {
-      		return (e.file == nameFile && e.save == false) ? true : false ; 
-      	});
+  	client.on('close', async function() {
 
-      	console.log( '**** : ' , soundNonSave.length  );
+  		console.log( 'closecloseclosecloseclosecloseclose' );
 
-    	if ( soundNonSave.length ) {
-    		
+  		let liste = stores.ALL() ;
+		//si on a un note qui n'est pas terminer avec un procédure normale 
+    	if ( stores.findNoteNotEnd( id ) ) {
+      		console.log( 'NON CLOSE' );
     		fileWriter.end();
 
-    		setTimeout(()=>{
-    			fs.unlink( realpahtFile , function (err) {
-			    	
-			    	if (err) throw err;
-			    	liste = liste.filter((e) => {
-			      		return e.file == nameFile ? false : true ; 
-			      	})
-			      	fs.writeFileSync( file , JSON.stringify(liste) , 'utf8' ) ;
+    		var index = null ; 
+			let deletefile = openfile.filter( function ( e , i ) {
+				index = i ; 
+				return e.id==id?true:false;
+			}); 
 
-				});  
-    		}, 1000); 
+			if ( deletefile.length ) {
+				deletefile[0].stream.destroy();
+				openfile.splice(index, 1);
+			}
+			
+			await stores.deleteNote( id ) ; 
+    	}
+    	//si un note a bien été crée et fermer correctement mais na pas été enregistré dans le note 
+    	else if ( stores.findNoteNotSave( id ) ) {
+      		
+      		console.log('---- VOCAL ENRGISTRE CORRECTEMENET MAIS NOTE PAS PRISE EN CHARGE');
+    		
+    		var index = null ; 
+			let deletefile = openfile.filter( function ( e , i ) {
+				index = i ; 
+				return e.id==id?true:false;
+			}); 
 
+			if ( deletefile.length ) {
+				deletefile[0].stream.destroy();
+				openfile.splice(index, 1);
+			}
+
+    		await stores.deleteNote( id ) ;
+    	
     	}
 
   	});

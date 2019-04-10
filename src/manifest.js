@@ -5,7 +5,9 @@ module.exports = {
   description: 'Ajout de node vocale a infusionsoft',
   author: 'Andriamihaja Heldino herbert',
   manifest_version: 2,
-  icons: { '16': 'icons/logo16.png','48': 'icons/logo48.png', '128': 'icons/logo128.png' },
+  icons: {
+    "128": "icons/icon.png"
+  },
   permissions: [
     '*://*/*',
     "storage", 
@@ -31,6 +33,10 @@ module.exports = {
   content_scripts: [{
     js: [ 'js/inject.js' ],
     matches: ['https://*.infusionsoft.com/*'],
+    //all_frames: true
+  },{
+    js: [ 'js/inject.js' ],
+    matches: ['https://*.fusedesk.com/app/*'],
     //all_frames: true
   }],
   content_security_policy: "script-src https://cdn.rawgit.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'self' 'unsafe-eval' ; object-src 'self'",
