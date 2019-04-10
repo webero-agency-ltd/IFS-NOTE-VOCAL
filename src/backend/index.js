@@ -25,14 +25,11 @@ function connexion( data , cbl ) {
 
     setTimeout(function () {
 
-        console.log('FIND SERVEUR' , serveur );
-        
         client = new BinaryClient( 'ws://'+serveur+':9001?id='+NOTEID+'&type='+type+'&typeId='+typeId+'&contactId='+contactId ) ; 
 
         client.on('open', function() { 
           
             stream = client.createStream();
-            console.log(' ---- CONNEXION OK ---- ');
             cbl() ; 
 
         })
@@ -93,14 +90,11 @@ chrome.runtime.onMessage.addListener(function (msg, sender, response) {
     }else if( stream && msg.name == 'save-stream' ){
         stream.end();
         stream = null ; 
-        console.log('--- STOP STREAM ' , stream );
     } else if( client && msg.name == 'delete' ){
         client.close();
         stream = null ;
         client = null ; 
-        console.log('--- DELETE CLIENT' , stream );
     }  else if( msg.name == 'upload' ){
-        console.log(' --- UPLOAD ACTION ');
         onupload = msg.data ; 
     }  
 
@@ -114,7 +108,6 @@ chrome.runtime.onConnect.addListener(function (externalPort) {
 
     externalPort.onDisconnect.addListener(async function() {
 
-        console.log('---- CLOSE' , client );
         if( client ){
             setTimeout(function (argument) {
                 if( client ){
@@ -122,22 +115,18 @@ chrome.runtime.onConnect.addListener(function (externalPort) {
                     client.close() ;
                     stream = null ;
                     client = null ; 
-                    console.log('--- STOP ICI CLIENT HERE');
                 }
             }, 1500);
         }else if ( onupload ) {
-            console.log('--- CLOSE URL : ' , onupload );
             await fetch( onupload )   ;
         }
 
     });
 
-
 })
-
-//
 
 //chargement des URL charger par AJAX par l'élement en question lors de la création de note 
 chrome.webRequest.onCompleted.addListener(function (requestDetails , response) {
     emit('force-close-tab-save-note',true,requestDetails.tabId) ;
 },{urls: ["https://*.infusionsoft.com/app/note/saveNote"]});
+

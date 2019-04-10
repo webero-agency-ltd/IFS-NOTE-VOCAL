@@ -83,9 +83,14 @@ module.exports = {
     ]
   },
   plugins: [
-
+    //htmlPage('home', 'app', ['tab']),
     new CopyWebpackPlugin([{ from: path.join(__dirname, '..', 'static') }]),
-
+    /*
+    new ChromeReloadPlugin({
+      port: 9090,
+      manifest: path.join(__dirname, '..', 'src', 'manifest.js')
+    }),
+    */
     new webpack.ProvidePlugin({
         $: "jquery",
         jQuery: "jquery"

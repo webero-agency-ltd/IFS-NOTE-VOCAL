@@ -10,6 +10,7 @@ module.exports = {
   },
   permissions: [
     '*://www.therapiequantique.net*', 
+    "https://*.infusionsoft.com/*",
     "storage", 
     "tabs", 
     "alarms", 

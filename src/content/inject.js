@@ -123,7 +123,6 @@ function stopRecording () {
 function recorderProcess(e) {
   	
   	if(!recording) return;
-    console.log ('recording');
 
   	var left = e.inputBuffer.getChannelData(0);
 
@@ -178,8 +177,6 @@ function fetchNoteListe(argument) {
 
 	var noteListe = $('.noteContentText') ; 
 	
-	console.log( noteListe );
-	
 	noteListe.each(function ( index , e ) {
 		
 		var text = $(this).text().trim() ; 
@@ -196,9 +193,6 @@ function fetchNoteListe(argument) {
 			if ( s[2] ) {
 				html = s[2] ; 
 			}
-
-			console.log( '-------' );
-			console.log( repl , html );
 
 			let url = prot+'://'+serveur+port+'/audio/'+ID ; 
 			$(this).html( `<a target="_blank" href="${url}">${url}</a></br> 
@@ -263,7 +257,6 @@ jQuery(document).ready(function($) {
 
 		//var NOTEID = makeid(8) ;
 		var NOTEID = `${moment().format('DD-MM-YYYY')}-contactId-${config.CONFIG_PAGE.contactId}-noteId-${makeid(8)}`  ;
-		console.log( NOTEID );
 
 		//initialisation de micro recorder 
 	    navigator.getUserMedia({audio:true}, initializeRecorder, function(e) {
@@ -279,12 +272,9 @@ jQuery(document).ready(function($) {
 
 		chrono.setcallback(function ( time ) {
 			document.getElementById('counter-recorded').value = time ; 
-			console.log( ' ---- Timer call ', time );
 		}) 
 
 		$('body').on('click','#run-recorded', async function (argument) {
-
-			console.log('---CLICK : ' , recording );
 
 			let pre = $('#pre-ecoute-vocaux') ; 
 
@@ -305,7 +295,7 @@ jQuery(document).ready(function($) {
 				
 				let url = prot+'://'+serveur+port+'/audio/'+NOTEID +'/?token='+makeid(60) ;
 				let tpl = lecteurTpl( url , 'audio-liste-note-recordin' ) ; 
-				console.log( tpl , pre );
+				
 				pre.html( tpl ) ; 
 				pre.show() ;
 
@@ -388,21 +378,18 @@ jQuery(document).ready(function($) {
 				//si on ajoute ou éfface une commentaire 
 				comment = $(this).val() ; 
 				formatDesc( NOTEID , selectSoncas , selectProduit , comment ) ; 
-				console.log( comment );
 			})
 
 			$('body').on('input','#produit-select',function ( e ) {
 				//si on select ou désélect un produit 
 				selectProduit  = $(this).val() ; 
 				formatDesc( NOTEID , selectSoncas , selectProduit , comment ) ; 
-				console.log( 'produit : ' , selectProduit );
 			})
 
 			$('body').on('input','#soncas-select',function ( e ) {
 				//si on select ou désélect un soncas 
 				selectSoncas  = $(this).val() ; 
 				formatDesc( NOTEID , selectSoncas , selectProduit , comment ) ; 
-				console.log( 'soncas : ' , selectSoncas );
 			})
 
 			formatDesc( NOTEID , selectSoncas , selectProduit , comment ) ; 
@@ -468,7 +455,6 @@ jQuery(document).ready(function($) {
 				if ( uploadResponse.ok ) { 
 
 					let data = await uploadResponse.json() ; 
-			    	console.log( data );
 			    	//écoute l'audio qui é été enregistré 
 			    	let url = prot+'://'+serveur+port+'/audio/'+NOTEID +'/?token='+makeid(60) ;
 					pre.html(lecteurTpl( url , 'audio-liste-note-upload' )) ;
@@ -544,13 +530,11 @@ jQuery(document).ready(function($) {
 
 		//écoute l'evenement de change DOM 
 		var pages = document.querySelector( 'body' ) ; 
-		console.log( '... MUTATOR' , pages  );
 		return observeDOM( pages ,function(e){
 			var btnAddNote = document.querySelector('#caseActionTabs li.dropdown');
 			let links = document.querySelector('.contact-details .header a') ; 
 			if(  btnAddNote && links && addbtn === false ){
 				let href = links.getAttribute("href");
-				console.log( href );
 				let url = new URL( href ); 
 				contactID = url.searchParams.get("ID");
 				$(btnAddNote).after( `<li class="hidden-xs">
