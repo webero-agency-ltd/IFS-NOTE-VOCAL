@@ -1,10 +1,9 @@
 
-
 export function recordedTpl() {
 
 	return  `<div class="fieldContainer fieldContainerMargin">
 		    <div class="fieldLabel">
-		        <label class="action-label" for="template">Vocaux</label>
+		        <label class="action-label" for="template">Vocal </label>
 		    </div>
 		    <div class="fieldControl">
 		        <div style="display: flex;">
@@ -13,31 +12,25 @@ export function recordedTpl() {
 		        		<input id="counter-recorded" class="fieldControlWidth" style="width: 100px; margin-left: 6px;" disabled="disabled" id="timer" name="timer" type="text" value="00:00">
 		        	</div>
 		            <div style="display: flex;">
-		            	<input class="inf-button btn button-x" id="run-recorded" name="runrecorded" type="button" value="Enregistré">
-		            	<input disabled="disabled" class="inf-button btn button-x" id="stop-recorded" name="resetrecorded" type="button" value="Effacté">
-		            	<input class="inf-button btn button-x" id="upload-file-btn" type="button" value="Uploader">
+		            	<input class="inf-button btn button-x" id="run-recorded" name="runrecorded" type="button" value="Enregistrer">
+		            	<input disabled="disabled" class="inf-button btn button-x" id="stop-recorded" name="resetrecorded" type="button" value="Effacer">
+		            	<input class="inf-button btn button-x" id="upload-file-btn" type="button" value="Télécharger">
 		            	<input style="position: absolute; top: -30000px; left: -30000px;" type="file" id="audio-upload" name="avatar" accept="audio/*">
 		            </div>
 		        </div>
 		    </div>
-		    
 		    <style>
-		    	
 		    	.recorder-style{
 					width: 26px;
 					height: 26px;
 					border-radius: 26px; 
 					background-color: #999 ; 
 		    	}
-
 		    	.recorder-style.active{
 					background-color: red ;
 		    	}
-				
 		    </style>
-
 		</div>
-
 		<div class="fieldContainer fieldContainerMargin">
 		    <div class="fieldLabel"></div>
 		    <div class="fieldControl">
@@ -46,7 +39,6 @@ export function recordedTpl() {
 		</div>` ; 
 
 }
-
 
 export function lecteurTpl( url , id = "" ) {
 
@@ -61,30 +53,20 @@ export function lecteurTpl( url , id = "" ) {
 			<a data-id="${id}" data-value="2" class="speed-fan" href="#"><span>x 2</span></a>
 		</div>
 		<style>
-			
 			a.speed-fan{
-			
 				color : #b5b5b5 ; 
-
 				display: inline-block;
 			    vertical-align: top;
 			    margin-left: 0.51rem;
 			    margin-right: 0.51rem;
-			
 			}
-
 			a.speed-fan.active{
-			
 				color : #121212 ; 
-			
 			}
-
 		</style>
 	</div>` ; 
 
 }
-
-
 
 export function selectTpl( title ,option , id = "" , multiple = false ) {
 
@@ -92,14 +74,13 @@ export function selectTpl( title ,option , id = "" , multiple = false ) {
 	    <div class="fieldLabel fieldLabelVerticalAlignTop">
 	        <label class="action-label" for="${id}">${title}</label></div>
 	    <div class="fieldControl">
-	        <select id="${id}" style="width:100%;" class="inf-select is-component" multiple="${multiple?'multiple':false}" name="${id}" data-on="Component.Select">
+	        <select ${multiple==true?'size="'+option.length+'"':''}  id="${id}" style="width:100%;" class="inf-select is-component" ${multiple==true?'multiple="multiple"':''}  name="${id}" data-on="Component.Select">
 	        	${option}
 	        </select>
 	    </div>
 	</div>` ; 
 
 }
-
 
 export function areaTpl( title ,value , id = "" ) {
 

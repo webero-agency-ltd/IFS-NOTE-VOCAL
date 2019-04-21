@@ -9,7 +9,7 @@ module.exports = {
     "128": "icons/icon.png"
   },
   permissions: [
-    '*://www.therapiequantique.net*', 
+    '*://*.therapiequantique.net/*', 
     "https://*.infusionsoft.com/*",
     "storage", 
     "tabs", 

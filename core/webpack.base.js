@@ -2,6 +2,7 @@ const path = require('path')
 const webpack = require('webpack')
 const {cssLoaders, htmlPage} = require('./tools')
 const CopyWebpackPlugin = require('copy-webpack-plugin')
+const GenerateJsonPlugin = require('generate-json-webpack-plugin');
 
 let resolve = dir => path.join(__dirname, '..', 'src', dir)
 module.exports = {
@@ -91,6 +92,7 @@ module.exports = {
       manifest: path.join(__dirname, '..', 'src', 'manifest.js')
     }),
     */
+    new GenerateJsonPlugin('../build/manifest.json', require('../src/manifest.js')),
     new webpack.ProvidePlugin({
         $: "jquery",
         jQuery: "jquery"

@@ -13,7 +13,6 @@ exports.htmlPage = (title, filename, chunks, template) => new HtmlWebpackPlugin(
   chunks
 })
 
-
 exports.cssLoaders = (options = {}) => {
   let loaders = {}
   let prePprocessors = {
