@@ -37,7 +37,7 @@ function findconfig () {
 		page = 'HOMENOTEMODALE' ; 
 	}else if ( location.pathname=='/app/' && platfome =='fusedesk' ) {
 		page = 'HOMEFUSEDESK' ; 
-	}else if( location.pathname=='Task/manageTask.jsp' ){
+	}else if( location.pathname=='/Task/manageTask.jsp' ){
 		//Page add task vocal 
 		page = 'EDITNOTETASK' ;
 	}
