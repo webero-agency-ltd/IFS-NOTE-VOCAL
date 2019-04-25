@@ -1,56 +1,41 @@
 import { BinaryClient } from 'binaryjs-client';
 import { wav } from 'wav';
 import recordRTC from 'recordRTC';
-
 import co from '../libs/config';
 
-var config = co() ;
-
+let config = co() ;
 let serveur = config.URL ; 
- 
 console.log( serveur );
-
-var stream = null ;
-var client = null ; 
-var onupload = false ; 
+let stream = null ;
+let client = null ; 
+let onupload = false ; 
 
 function connexion( data , cbl ) {
-
-    var {
+    let {
         NOTEID , 
         type , 
         typeId , 
         contactId
     } = data  ; 
-
     setTimeout(function () {
-
         client = new BinaryClient( 'ws://'+serveur+':9001?id='+NOTEID+'&type='+type+'&typeId='+typeId+'&contactId='+contactId ) ; 
-
         client.on('open', function() { 
-          
             stream = client.createStream();
             cbl() ; 
-
         })
-
     }, 1000 );
-
 }
 
 function convertFloat32ToInt16(buffer) {
-
-      var l = buffer.length;
-      var buf = new Int16Array(l);
-      while (l--) {
+    let l = buffer.length;
+    let buf = new Int16Array(l);
+    while (l--) {
         buf[l] = Math.min(1, buffer[l])*0x7FFF;
-      }
-      return buf.buffer;
-
+    }
+    return buf.buffer;
 }
 
 function emit(e,d,_tab) {
-
     chrome.tabs.query({}, 
         function (tabs) {
             if ( _tab === 'all' ) {
@@ -74,11 +59,9 @@ function emit(e,d,_tab) {
             );
         }
     );
-    
 }
 
 chrome.runtime.onMessage.addListener(function (msg, sender, response) {
-
     if ( stream && msg.name=='stream' ) {
         var arr = new Float32Array( msg.data );
         stream.write(convertFloat32ToInt16( arr ));
@@ -97,21 +80,15 @@ chrome.runtime.onMessage.addListener(function (msg, sender, response) {
     }  else if( msg.name == 'upload' ){
         onupload = msg.data ; 
     }  
-
 });
 
 //écoute evene
 chrome.runtime.onConnect.addListener(function (externalPort) {
-
-    //au 
     onupload = false ; 
-
     externalPort.onDisconnect.addListener(async function() {
-
         if( client ){
             setTimeout(function (argument) {
                 if( client ){
-
                     client.close() ;
                     stream = null ;
                     client = null ; 
@@ -120,9 +97,7 @@ chrome.runtime.onConnect.addListener(function (externalPort) {
         }else if ( onupload ) {
             await fetch( onupload )   ;
         }
-
     });
-
 })
 
 //chargement des URL charger par AJAX par l'élement en question lors de la création de note 

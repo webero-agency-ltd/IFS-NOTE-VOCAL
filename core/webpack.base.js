@@ -3,6 +3,7 @@ const webpack = require('webpack')
 const {cssLoaders, htmlPage} = require('./tools')
 const CopyWebpackPlugin = require('copy-webpack-plugin')
 const GenerateJsonPlugin = require('generate-json-webpack-plugin');
+const ChromeReloadPlugin  = require('wcer')
 
 let resolve = dir => path.join(__dirname, '..', 'src', dir)
 module.exports = {
@@ -86,12 +87,10 @@ module.exports = {
   plugins: [
     //htmlPage('home', 'app', ['tab']),
     new CopyWebpackPlugin([{ from: path.join(__dirname, '..', 'static') }]),
-    /*
-    new ChromeReloadPlugin({
+    /*new ChromeReloadPlugin({
       port: 9090,
       manifest: path.join(__dirname, '..', 'src', 'manifest.js')
-    }),
-    */
+    }),*/
     new GenerateJsonPlugin('../build/manifest.json', require('../src/manifest.js')),
     new webpack.ProvidePlugin({
         $: "jquery",

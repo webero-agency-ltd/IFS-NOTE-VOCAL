@@ -6,14 +6,14 @@ export function recordedTpl() {
 		        <label class="action-label" for="template">Vocal </label>
 		    </div>
 		    <div class="fieldControl">
-		        <div style="display: flex;">
+		        <div id="recorder-template" style="display: flex;">
 		        	<div style="display: flex;">
 		    			<div id="logo-recorded" class="recorder-style"></div>
 		        		<input id="counter-recorded" class="fieldControlWidth" style="width: 100px; margin-left: 6px;" disabled="disabled" id="timer" name="timer" type="text" value="00:00">
 		        	</div>
 		            <div style="display: flex;">
 		            	<input class="inf-button btn button-x" id="run-recorded" name="runrecorded" type="button" value="Enregistrer">
-		            	<input disabled="disabled" class="inf-button btn button-x" id="stop-recorded" name="resetrecorded" type="button" value="Effacer">
+		            	<input disabled="disabled" class="inf-button btn button-x" id="delete-recorded" name="resetrecorded" type="button" value="Effacer">
 		            	<input class="inf-button btn button-x" id="upload-file-btn" type="button" value="Télécharger">
 		            	<input style="position: absolute; top: -30000px; left: -30000px;" type="file" id="audio-upload" name="avatar" accept="audio/*">
 		            </div>

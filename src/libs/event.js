@@ -1,7 +1,10 @@
+/*
+*	Evenement de google chrome qui nous permet de communiqué entre backend, popup, injectscript
+*/
 let on = {} ;
 export function $on( event , func ) {
-	if (on[event]) {	
-	}else{
+	if (on[event]) {}
+	else{
 		on[event] = [] ;
 	}
 	return on[event].push(func);

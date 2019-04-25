@@ -1,7 +1,7 @@
 
 module.exports = {
   name: 'IFS-NOTE-VOCAL',
-  version: '0.0.1',
+  version: '0.0.2',
   description: 'Ajout de node vocale a infusionsoft',
   author: 'Andriamihaja Heldino herbert',
   manifest_version: 2,

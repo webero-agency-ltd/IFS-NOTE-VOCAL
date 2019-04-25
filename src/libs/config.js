@@ -39,7 +39,7 @@ function findconfig () {
 		page = 'HOMEFUSEDESK' ; 
 	}else if( location.pathname=='/Task/manageTask.jsp' ){
 		//Page add task vocal 
-		page = 'EDITNOTETASK' ;
+		page = 'EDITTASK' ;
 	}
 	CONFIG_PAGE = { popup , typeId , contactId , vocaux , page , ...CONFIG_PAGE } ; 
 }
