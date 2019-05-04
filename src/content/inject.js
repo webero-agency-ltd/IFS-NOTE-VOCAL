@@ -56,8 +56,11 @@ $on('audio-recoreder-init',function ( cookie ) {
 		}
 		else if(  config.CONFIG_PAGE.page == 'EDITTASK' ){
 			readydom('#Task0CreationNotes',function () {
+				let ID = '' ; 
+				let html = '' ; 
+				let url = '' ; 
 				if ( !firstLoad ) {
-					var text = $('#Task0CreationNotes').text().trim() ; 
+					let text = $('#Task0CreationNotes').text().trim() ; 
 					if ( text.indexOf('NOTEID::') >= 0 ) {
 						let repl = text.replace(new RegExp('\r?\n','g'), ''); ; 
 						let sdsd = /NOTEID::(.*)::NOTEID(.*)/gi;
@@ -69,11 +72,11 @@ $on('audio-recoreder-init',function ( cookie ) {
 						}
 						if ( s[2] ) {
 							html = s[2] ; 
-						}
-						let url = PROT+'://'+URL+PORT+'/audio/'+ID ; 
+						} 
+						url = PROT+'://'+URL+PORT+'/audio/'+ID ; 
 						//ici on check qu'on a bien un notes dans l'update 
-						PAGE_EDITTASK( ID , url , text.replace(new RegExp(/NOTEID::(.*)::NOTEID/,'gi'), '').trim() ) 
 					}
+					PAGE_EDITTASK( ID , url , text.replace(new RegExp(/NOTEID::(.*)::NOTEID/,'gi'), '').trim() ) 
 					firstLoad = true ; 
 				}
 			})
@@ -104,23 +107,24 @@ $on('audio-recoreder-init',function ( cookie ) {
 		}
 		else if( config.CONFIG_PAGE.page =='CHEKUPDATENOTE'){
 			readydom('#notes',function () {
-				var text = $('#notes').text().trim() ; 
+				let text = $('#notes').text().trim() ; 
+				let ID = '' ; 
+				let html = '' ; 
+				let url = '' ; 
 				if ( text.indexOf('NOTEID::') >= 0 ) {
 					let repl = text.replace(new RegExp('\r?\n','g'), ''); ; 
 					let sdsd = /NOTEID::(.*)::NOTEID(.*)/gi;
 					let s = sdsd.exec(repl);
-					let ID = '' ; 
-					let html = '' ; 
 					if ( s[1] ) {
 						ID = s[1] ; 
 					}
 					if ( s[2] ) {
 						html = s[2] ; 
 					}
-					let url = PROT+'://'+URL+PORT+'/audio/'+ID ; 
+					url = PROT+'://'+URL+PORT+'/audio/'+ID ; 
 					//ici on check qu'on a bien un notes dans l'update 
-					PAGE_EDITNOTE( ID , url , text )
 				}
+				PAGE_EDITNOTE( ID , url , text )
 			})
 		}
 		/*
