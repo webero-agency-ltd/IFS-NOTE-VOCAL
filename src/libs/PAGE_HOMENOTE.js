@@ -1,5 +1,9 @@
+import co from './config';
+import loadeNoteListe from './loadeNoteListe';
 
-export default function editnote(length) {
+let config = co() ; 
+export default function homenote() { 
+	console.log(' HOME NOTE ADD BUTTON ') ; 
   	//on est dans la page ou on liste tout les notes 
 	//on ajoute le button "add note vocal" 
 	var btnAddNote = document.querySelector('#TemplateId ~ input');

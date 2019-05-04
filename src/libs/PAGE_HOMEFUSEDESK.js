@@ -1,14 +1,18 @@
+import co from './config';
+import observeDOM from './observeDOM';
+let config = co() ; 
 
-export default function editnote(length) {
-  	var typeId = config.CONFIG_PAGE.typeId ; 
+export default function PAGE_HOMEFUSEDESK( ) {
+  
+  	let typeId = config.CONFIG_PAGE.typeId ; 
 	//caseActionTabs
-	var addbtn = false ; 
-	var btnAddNote = document.querySelector('#caseActionTabs li');
+	let addbtn = false ; 
+	let btnAddNote = document.querySelector('#caseActionTabs li');
 	let contactID = '';
 	//écoute l'evenement de change DOM 
-	var pages = document.querySelector( 'body' ) ; 
+	let pages = document.querySelector( 'body' ) ; 
 	return observeDOM( pages ,function(e){
-		var btnAddNote = document.querySelector('#caseActionTabs li.dropdown');
+		let btnAddNote = document.querySelector('#caseActionTabs li.dropdown');
 		let links = document.querySelector('.contact-details .header a') ; 
 		if(  btnAddNote && links && addbtn === false ){
 			let href = links.getAttribute("href");

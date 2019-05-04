@@ -56,88 +56,14 @@ function formatDesc( NOTEID , selectSoncas , selectProduit , comment , selectClo
 	}
 }	
 
-function preformateUpdate( HTML ) {
-	let soncas_pre = [] ; 
-	let produit_pre = [] ; 
-	let closing_pre = '' ; 
-	let comment_pre = '' ; 
-	let ss = HTML.split(/\r?\n/)  ;
-	//recherche de soncas s'il existe
-	let step = false ; 
-	let atep = false ; 
-	soncas_pre = ss.filter(function (e) {
-		if ( e.toLowerCase().indexOf('soncas') >= 0  ) {
-			atep = true ; 
-		}else if( e.toLowerCase().indexOf('commentaire') >= 0 || e.toLowerCase().indexOf('produit') >= 0  || e.toLowerCase().indexOf('vitesse closing') >= 0 ){
-			step = true ; 
-		}
-		if ( atep && !step && e.toLowerCase().indexOf('soncas') == -1  ) {
-			return true
-		}
-		return false
-	}) 
-	soncas_pre=soncas_pre.map( e => e.replace(new RegExp('-','g'), '').trim() ) ; 
-	//recherche produi s'il existe 
-	step = false ; 
-	atep = false ; 
-	produit_pre = ss.filter(function (e) {
-		if ( e.toLowerCase().indexOf('produit') >= 0  ) {
-			atep = true ; 
-		}else if( e.toLowerCase().indexOf('commentaire') >= 0 || e.toLowerCase().indexOf('vitesse closing') >= 0 ){
-			step = true ; 
-		}
-		if ( atep && !step && e.toLowerCase().indexOf('produit') == -1 ) {
-			return true
-		}
-		return false
-	})
-	produit_pre=produit_pre.map( e => e.replace(new RegExp('-','g'), '').trim() ) ; 
-
-	step = false ; 
-	atep = false ; 
-	closing_pre = ss.filter(function (e) {
-		if ( e.toLowerCase().indexOf('vitesse closing') >= 0  ) {
-			atep = true ; 
-		}else if( e.toLowerCase().indexOf('commentaire') >= 0 ){
-			step = true ; 
-		}
-		if ( atep && !step && e.toLowerCase().indexOf('vitesse closing') == -1 ) {
-			return true
-		}
-		return false
-	})
-	closing_pre=closing_pre.map( e => e.replace(new RegExp('-','g'), '').trim() ) ; 
-
-	step = false ; 
-	atep = false ; 
-	comment_pre = ss.filter(function (e) {
-		if ( e.toLowerCase().indexOf('commentaire') >= 0  ) {
-			atep = true ; 
-		}
-		if ( atep  && e.toLowerCase().indexOf('commentaire') == -1 ) {
-			return true
-		}
-		return false
-	})
-	return { comment : comment_pre.length>1?comment_pre.join("\n"):'' , closing : closing_pre , produit : produit_pre , soncas : soncas_pre }
-
-}
-
-export default function PAGE_EDITNOTE( ID , url , HTML ) {
+export default function PAGE_EDITNOTE(length) {
 
 	let { btnAddNote , actionType , sujet , noteSave } = editnote() ;
   	//Ajout du template d'enregistrement dans infusionsoft
     btnAddNote.before( recordedTpl(obrecod.recorder()) ) ; 
 	//initialisation du DOM de l'application 
-	let NOTEID = obrecod.init( ID , url ) ; 
-	//recherche de tout les informations précedement ajouter dans la notes 
+	let NOTEID = obrecod.init() ; 
 	/////////////
-	let placeholder = null ; 
-	if ( HTML ) {
-		placeholder = preformateUpdate( HTML )
-	}else{
-		noteSave.attr('disabled','disabled') ;	
-	}
 	//ici on fait la modification des valeurs boutton 
 	actionType.html('<option>Message Vocal</option>') 
 	let dataTitle = title() ; 
@@ -159,29 +85,17 @@ export default function PAGE_EDITNOTE( ID , url , HTML ) {
 	if ( sujetParent ) {
 		let soncas_liste = soncas() ; 
 		let soncasOp = soncas_liste.map(function ( e , i ) {
-			if ( placeholder&&placeholder.soncas&& placeholder.soncas.indexOf( e.trim() ) >= 0 ) {//.toLowerCase()
-				return  `<option selected="selected" value="${i}">${e}</option>` ; 
-			}else{
-				return  `<option value="${i}">${e}</option>` ; 
-			}
+			return  `<option value="${i}">${e}</option>` ; 
 		}) ; 
 		let produit_liste = produit() ; 
 		let produitOp = produit_liste.map(function ( e , i ) {
-			if ( placeholder&&placeholder.produit&& placeholder.produit.indexOf( e.trim() ) >= 0 ) {//.toLowerCase()
-				return  `<option selected="selected" value="${i}">${e}</option>` ; 
-			}else{
-				return  `<option value="${i}">${e}</option>` ; 
-			}
+			return  `<option value="${i}">${e}</option>` ; 
 		}) ; 
 		let closing_liste = closing() ; 
 		let closingOp = closing_liste.map(function ( e , i ) {
-			if ( placeholder&&placeholder.closing&& placeholder.closing.indexOf( e.trim() ) >= 0 ) {//.toLowerCase()
-				return  `<option selected="selected" value="${i}">${e}</option>` ; 
-			}else{
-				return  `<option value="${i}">${e}</option>` ; 
-			}
+			return  `<option value="${i}">${e}</option>` ; 
 		}) ;
-		sujetParent.after( areaTpl('COMMENTAIRE' , placeholder&&placeholder.comment?placeholder.comment:'', 'comment' ) ) ;
+		sujetParent.after( areaTpl('COMMENTAIRE' , '' , 'comment' ) ) ;
 		sujetParent.after( selectTpl('Vitesse Closing' , closingOp , 'closing-select' , false ) ) ;
 		sujetParent.after( selectTpl('Produit' , produitOp , 'produit-select' , true  ) ) ;
 		sujetParent.after( selectTpl('SONCAS' , soncasOp , 'soncas-select' , true ) ) ;

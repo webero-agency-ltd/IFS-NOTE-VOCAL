@@ -5,7 +5,6 @@ import co from '../libs/config';
 
 let config = co() ;
 let serveur = config.URL ; 
-console.log( serveur );
 let stream = null ;
 let client = null ; 
 let onupload = false ; 
@@ -18,8 +17,8 @@ function connexion( data , cbl ) {
         contactId
     } = data  ; 
     setTimeout(function () {
-        client = new BinaryClient( 'ws://'+serveur+':9001?id='+NOTEID+'&type='+type+'&typeId='+typeId+'&contactId='+contactId ) ; 
-        client.on('open', function() { 
+        client = new BinaryClient( 'ws://'+serveur+':9001?unique='+NOTEID+'&type='+type+'&typeId='+typeId+'&contactId='+contactId ) ; 
+        client.on('open', function() {
             stream = client.createStream();
             cbl() ; 
         })
@@ -79,7 +78,28 @@ chrome.runtime.onMessage.addListener(function (msg, sender, response) {
         client = null ; 
     }  else if( msg.name == 'upload' ){
         onupload = msg.data ; 
-    }  
+    }  else if ( msg.name == 'cookies' ) {
+        let urlToken  = config.PROT+'://'+config.URL ; 
+        chrome.cookies.get({ url: urlToken , name: 'me_identity' },
+            async function (cookie) {
+                if (cookie) {
+                    //@todo : et récupération aussi si l'utilisateur actuele a le droite de prendre des 
+                    //note de cette compte infusionsoft PROT+'://'+URL+PORT+'/save/'
+                    let url =  config.PROT+'://'+config.URL+config.PORT+'/infusionsoft/check/' + msg.data + '?token=' + cookie.value; 
+                    let check = await fetch( url ) ;
+                    console.log( 'Le check se trouve ICI' , check.ok , url ) ; 
+                    if ( check.ok ) { 
+                        let data = await check.json() ;
+                        if ( data.success ) {
+                            emit('audio-recoreder-init',cookie,'all') ;
+                        } 
+                    } 
+                }else{
+                    console.log( '--- VOTRE SESSION INTROUVABLE, AFFICHE UN MESSAGE DANS LE POPUP QUI INDIQUE QUE IL Y A UNE ERREUR DE CONNEXION A LAPPLICATION' ) ; 
+                }
+            }
+        );
+    }
 });
 
 //écoute evene

@@ -6,14 +6,14 @@ import moment from 'moment' ;
 import makeid from './makeid';
 import co from './config';
 import timer from './timer';
-import { recordedTpl , lecteurTpl } from './tpl'
+import { recoder , lecteurTpl } from './tpl'
 import { $on , $emit } from '../libs/event';
 import readydom from '../libs/readydom';
 import pauseall from '../libs/pauseall';
 import { recorder } from './DOM' ; 
 
 let config = co() ; 
-let { serveur , port , prot } = config.URL ;
+let { URL , PROT , PORT } = config ;
 
 let context = null ; 
 class recordClass{
@@ -24,12 +24,13 @@ class recordClass{
 		this.recording = false ; 
 		this.chrono = false ;
 		this.dom = {} ; 
+		this.urlPrelisten = null ; 
 	}
 	//on demande au serveur de commencer une enregistrement 
 	//si le reserveur répond OK, le backend lance une evenement 
 	//connexion-soket-note-vocaux
 	start( NOTEID ){
-		let { btnRun , btnDelete , noteSave , logoRecorder , listenContent } = this.dom ; 
+		let { audioUpload , btnRun , btnDelete , noteSave , logoRecorder , listenContent } = this.dom ; 
 		//transformation des buttons du recorder 
 		listenContent.html(' ') ; 
 		//supression de tout les audios controller qui existe X1, X2, avec l'élement audion en question 
@@ -42,6 +43,8 @@ class recordClass{
 		//transformation du btn star en btn stop qui va stoper l'enregistrement de vocaux 
 		btnRun.val('stop enregistrement') ; 
 		btnRun.removeAttr('disabled') ;
+		//désactivé le button uploader 
+		audioUpload.attr('desabled','desabled') ; 
 		//desactiver le buttin qui va permerter de suprmimer les notes 
 		btnDelete.attr('disabled','disabled') ;
 		//desactiver le button de création de note ( validation de note d'infusionsoft ), et de couleur vert
@@ -55,16 +58,23 @@ class recordClass{
 		let { btnRun , btnDelete , noteSave , logoRecorder , listenContent } = this.dom ; 
 		logoRecorder.removeClass('active')
 		btnDelete.removeAttr('disabled') ;
+		btnRun.attr('disabled','disabled') ;
 		btnRun.val('Enregistrer') ; 
 		//affichage du préécoute 
-		let url = prot+'://'+serveur+port+'/audio/'+ this.NOTEID +'/?token='+makeid(60) ;
+		let url = PROT+'://'+URL+PORT+'/audio/'+ this.NOTEID +'/?token='+makeid(60) ;
 		let tpl = lecteurTpl( url , 'audio-liste-note-recordin' ) ; 
-		pre.html( tpl ) ; 
-		pre.show() ;
+		listenContent.html( tpl ) ; 
+		listenContent.show() ;
 		noteSave.removeAttr('disabled') ;
 		//demande au serveur de stoper l'enregistrement 
 		this.recording = false;
 		$emit('save-stream' , null ) ; 	
+	}
+	showNote( url ){
+		let { btnRun , btnDelete , noteSave , logoRecorder , listenContent } = this.dom ; 
+		let tpl = lecteurTpl( url , 'audio-liste-note-recordin' ) ; 
+		listenContent.html( tpl ) ; 
+		listenContent.show() ;
 	}
 	pause(){
 	}
@@ -72,14 +82,21 @@ class recordClass{
 	async delete( url ) {
 		pauseall() ; 
 		//cacher le préécoute 
-		$('#pre-ecoute-vocaux').hide() ; 
-		$( this ).attr('disabled','disabled') ;
+		let { btnRun , btnDelete , noteSave , logoRecorder , listenContent } = this.dom ; 
+		listenContent.hide() ; 
+		btnDelete.attr('disabled','disabled') ;
+		btnRun.removeAttr('disabled') ;
+		//rendre de nouveaux inactive la button de création de notes 
+		noteSave.attr('disabled','disabled') ;		
 		//supression de ce fichier dans le serveur 
 		return await fetch( url )  ;
 	}
 	//création de ID 
-	makeid(){
-		this.NOTEID = makeid(8) ;
+	makeid( ID ){
+		if ( ID ) {
+			return this.NOTEID = ID ; 
+		}
+		return this.NOTEID = makeid(8) ;
 		//this.NOTEID = `${moment().format('DD-MM-YYYY')}-contactId-${config.CONFIG_PAGE.contactId}-noteId-${makeid(8)}`  ;
 	}
 	//ajout du template du recorder ICI
@@ -87,31 +104,39 @@ class recordClass{
 		//écouter ici si les elements du recorder sont tout bien enregistré au DOM 
 		readydom('#recorder-template', () => {
 			this.dom = recorder() ;
+			if ( this.urlPrelisten ) {
+				this.showNote( this.urlPrelisten )
+			}
 			//lancement des utiles par le recorder en question 
 			this.event() ; 
 		})
-		return recordedTpl()  ; 
+		return recoder()  ; 
 	}
 	//envoyer le flux de traitement a la backend de l'application  
-	recorderProcess(e) {
-	  	if(!this.recording) return;
+	recorderProcess(e) {	
+	    if(!this.recording) return;
 	  	let left = e.inputBuffer.getChannelData(0);
-		$emit('stream' , [...left] ) ; 	
+		$emit('stream' , [...left] ) ;  	
 	}
 	//capture le flux audio qui vient du micro
 	//et faire quelque traitement 
-	initializeRecorder(stream) {
-		let audioContext = window.AudioContext;
+	initializeRecorder(stream) {  	
+	    let audioContext = window.AudioContext;
 		context = new audioContext();
 		let audioInput = context.createMediaStreamSource(stream);
 		let bufferSize = 2048;
 		let recorder = context.createScriptProcessor(bufferSize, 1, 1);
-		recorder.onaudioprocess = this.recorderProcess;
+		recorder.onaudioprocess = this.recorderProcess.bind(this);
 		audioInput.connect(recorder);
 		recorder.connect(context.destination);
 	}
 	//initialisation du composante d'enregistrement 
-	init(){
+	init( ID , urlPrelisten ){
+
+		if ( urlPrelisten ) {
+			this.urlPrelisten = urlPrelisten ; 
+		}
+		//@todo : le button vert de création de note a ajouter un attribut desabled 
 		//initialisation de micro recorder 
 	    navigator.getUserMedia({audio:true}, ( stream ) => {
 	    	this.initializeRecorder( stream )
@@ -126,25 +151,77 @@ class recordClass{
 		//écoute si le backend lance une evenement connexion-soket-note-vocaux
 		//cette evenement veut dire que le serveur a répondu OK et on peut commencer 
 		//l'enregistrement 
-		$on('connexion-soket-note-vocaux',function (argument) {
-			console.log('EVENEMENT DEPUIS BACKEND connexion-soket-note-vocaux')
+		$on('connexion-soket-note-vocaux', () => {
 			//lancement du chrono
 			if ( this.chrono ) {
 				this.chrono.start() ;
 			}
 			this.recording = true;
 		})
+		return this.makeid( ID ) ; 
 	}
 
 	event(){
-		console.log(' --- RUN LISTEN EVENEMENT ')
-		let { btnRun } = this.dom ; 
+		let { noteSave , btnRun , btnDelete , audioUpload , audioUploadBtn , listenContent } = this.dom ; 
 		btnRun.on( 'click' , async () => {
 			//écouter le clique de l'enregistrement des notes vocaux 
 			if ( this.recording ) 
 				this.stop() ; 
 			else
 				this.start() ; 
+		})
+		btnDelete.on( 'click' , async () => {
+			this.chrono.reset() ;
+			let url = PROT+'://'+URL+PORT+'/audio/delete/'+ this.NOTEID ;
+			this.delete( url ) ;
+		})
+		audioUpload.on( 'change' , async (ev) => {
+			if ( ev.target.files.length ) {
+				listenContent.html('') ; 
+				//désactivé la button 
+				audioUploadBtn.attr('disabled','disabled') ;
+				//désactivé le button delete 
+				btnDelete.attr('disabled','disabled') ;
+				//désactivé le boutton reocerd 
+				btnRun.attr('disabled','disabled') ;
+				//éfacer l'enregistrement précedement fait 
+				this.chrono.reset() ;
+				//désactivé le button de création de note
+				noteSave.attr('disabled','disabled') ;
+				let formData = new FormData();
+				formData.append('file', ev.target.files[0] );
+				//faire l'uploade automatiquement 
+				let url = PROT+'://'+URL+PORT+'/upload?unique='+this.NOTEID+'&type=infusionsoft&typeId='+config.CONFIG_PAGE.typeId+'&contactId='+config.CONFIG_PAGE.contactId  ;
+				$emit('upload', PROT+'://'+URL+PORT+'/close/'+this.NOTEID )
+				let uploadResponse = await fetch( url , {
+				    method: 'POST',
+				    headers: {
+				      	//'Content-Type': 'multipart/form-data'
+				    },
+				    body: formData
+				})
+				if ( uploadResponse.ok ) { 
+					let data = await uploadResponse.json() ; 
+			    	//écoute l'audio qui é été Enregistrer  
+			    	let url = PROT+'://'+URL+PORT+'/audio/'+ this.NOTEID +'/?token='+makeid(60) ;
+					listenContent.html(lecteurTpl( url , 'audio-liste-note-upload' )) ;
+					listenContent.show() ;
+					noteSave.removeAttr('disabled') ; 
+			    }
+			    //Tout les button son de nouveaux clicable 
+				setTimeout(function () {
+					//désactivé la button 
+					audioUploadBtn.removeAttr('disabled') ;
+					//désactivé le button delete 
+					btnDelete.removeAttr('disabled') ;
+					//désactivé le boutton reocerd 
+					//btnRun.removeAttr('disabled') ;
+				}, 1000);
+			}
+		})
+		//ICI on veut faire l'upload de fichier 
+		audioUploadBtn.on('click',function () {
+			audioUpload.trigger('click') ; 
 		})
 
 	}

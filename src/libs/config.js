@@ -31,9 +31,11 @@ function findconfig () {
 	var page = '' ;
 	if ( location.pathname=='/ContactAction/manageContactAction.jsp' && vocaux ) {
 		page = 'EDITNOTE'
+	}else if ( location.pathname=='/ContactAction/manageContactAction.jsp' && !vocaux ) {
+		page = 'CHEKUPDATENOTE' ; 
 	}else if ( location.pathname=='/Contact/manageContact.jsp' && !popup ) {
 		page = 'HOMENOTE' ; 
-	}else if ( location.pathname=='/ContactAction/allHistoryPop.jsp' && popup ) {
+	}else if ( location.pathname=='/ContactAction/allHistoryPop.jsp' ) {
 		page = 'HOMENOTEMODALE' ; 
 	}else if ( location.pathname=='/app/' && platfome =='fusedesk' ) {
 		page = 'HOMEFUSEDESK' ; 
@@ -47,6 +49,6 @@ function findconfig () {
 findconfig() ;
 
 export default function config() {
-	return { CONFIG_PAGE , URL : 'www.therapiequantique.net' , PORT : '' , PROT : 'https' } ;//'www.therapiequantique.net' 
-	//return { CONFIG_PAGE , URL : 'localhost' , PORT : ':4434' , PROT : 'http' } ;
+	return { CONFIG_PAGE , URL : 'therapiequantique.net' , PORT : '' , PROT : 'https' } ;//'www.therapiequantique.net' 
+	//return { CONFIG_PAGE , URL : 'localhost' , PORT : ':3000' , PROT : 'http' } ;
 }

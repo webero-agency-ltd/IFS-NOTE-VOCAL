@@ -1,67 +1,53 @@
+import { edittask } from './DOM' ; 
+import { recordedTpltask } from '../libs/tpl';
+import r from './recorder' ; 
+import co from '../libs/config';
 
-export default function editnote(length) {
-  	var NOTEID = `${moment().format('DD-MM-YYYY')}-contactId-${config.CONFIG_PAGE.contactId}-noteId-${makeid(8)}`  ;
-	//initialisation de micro recorder 
-    navigator.getUserMedia({audio:true}, initializeRecorder, function(e) {
-    	alert('une erreur est survenue');
-  	});
-  	//Ajout du template d'enregistrement dans infusionsoft
-	var btnAddNote = $('#Task0ActionDescription_data').parent('tr');
-	console.log( ' ---- : ' , btnAddNote ) ; 
+let obrecod = r() ; 
+let config = co() ; 
 
-    btnAddNote.before( recordedTpltask() ) ; 
-	//lancement de l'initialisation du timeur 
-	chrono = timer() ;
-	chrono.setcallback(function ( time ) {
-		document.getElementById('counter-recorded').value = time ; 
-	}) 
-	$('body').on('click','#run-recorded', async function (argument) {
-		let pre = $('#pre-ecoute-vocaux') ; 
-		pauseall() ;
-		if ( recording ) {
-			//stop chrono
-			chrono.stop() ; 
-			stopRecording() ; 
-			$('#logo-recorded').removeClass('active')
-			$('#stop-recorded').removeAttr('disabled') ;
-			$('#run-recorded').val('Enregistrer') ; 
-			//affichage du préécoute 
-			let url = prot+'://'+serveur+port+'/audio/'+NOTEID +'/?token='+makeid(60) ;
-			let tpl = lecteurTpl( url , 'audio-liste-note-recordin' ) ; 
-			pre.html( tpl ) ; 
-			pre.show() ;
-			$('#noteSave').removeAttr('disabled') ;
-		}else{
-			//vidé d'abord le lecteur audio 
-			pre.html(' ') ; 
-			startRecording( NOTEID ) ; 
-			var el = pre.find('.audio-controller') ; 
-			if (el.length) {
-				el.remove() ; 
-			}
-			$('#logo-recorded').addClass('active') ;  
-			//$('#run-recorded').attr('disabled','disabled') ;
-			$('#run-recorded').val('stop enregistrement') ; 
-			$('#stop-recorded').attr('disabled','disabled') ;
-			$('#noteSave').attr('disabled','disabled') ;
-		}
+export default function PAGE_EDITTASK( ID , url , text = '') {
+
+  	let { btnAddNote , taskcontent , SaveAndNew , noteSave , notesCreation } = edittask() ;
+    taskcontent.parent('tr').before( recordedTpltask(obrecod.recorder()) ) ; 
+	//initialisation du DOM de l'application 
+	let NOTEID = obrecod.init( ID , url ) ; 
+	notesCreation.val('NOTEID::'+NOTEID+'::NOTEID') ;
+	notesCreation.hide() ; 
+	notesCreation.after('<textarea rows="7" class="default-input field-valid" cols="38 " name="localnotesvocal" id="localnotesvocal">'+text+'</textarea>')
+	
+	$('body').on('change','#localnotesvocal',function () {
+		let value = $(this).val() ; 
+		notesCreation.val( 'NOTEID::'+NOTEID+'::NOTEID '+"\n"+value ) ;
+		console.log( value ) ; 
 	})
 
-	$('body').on('click','#stop-recorded', async function (argument) {
-		chrono.reset() ;
-		dellAllAudio( prot+'://'+serveur+port+'/delete?id='+NOTEID ) ; 
-		$('#noteSave').attr('disabled','disabled') ;
-	})
+	noteSave.on('click', () => {
 
-	$('body').on('click','#noteSave',function () {
-		if ( recording ) {
-			stopRecording() ;
-			setTimeout(function (argument) {
-				fetch(prot+'://'+serveur+port+'/save?id='+NOTEID) ;
-			}, 700);
-		}else{
-			fetch(prot+'://'+serveur+port+'/save?id='+NOTEID) ;
-		}
+		let formData = new FormData();
+		//@todo : récupération de tout les notes et enregistrement se fait ici. 
+		let url = config.PROT+'://'+config.URL+config.PORT+'/save/'+NOTEID+'?token='+navigator.userCookie + '&typeId='+config.CONFIG_PAGE.typeId  ; 
+		fetch(url , {
+		    method: 'POST',
+		    headers: {
+		      	'Accept': 'application/json',
+                'Content-Type': 'application/json'
+		    },
+		    body: JSON.stringify({ type : 'task', text : '' , title : '' } )
+		}) ;
 	})
-	$('#Task0CreationNotes').val('NOTEID::'+NOTEID+'::NOTEID') ; 
+	SaveAndNew.on('click', () => {
+
+		let formData = new FormData();
+		//@todo : récupération de tout les notes et enregistrement se fait ici. 
+		let url = config.PROT+'://'+config.URL+config.PORT+'/save/'+NOTEID+'?token='+navigator.userCookie + '&typeId='+config.CONFIG_PAGE.typeId  ; 
+		fetch(url , {
+		    method: 'POST',
+		    headers: {
+		      	'Accept': 'application/json',
+                'Content-Type': 'application/json'
+		    },
+		    body: JSON.stringify({ type : 'task', text : '' , title : '' } )
+		}) ;
+	})
 }
