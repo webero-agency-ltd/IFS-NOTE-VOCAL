@@ -115,3 +115,13 @@ export function areaTpl( title ,value , id = "" ) {
 
 }
 
+
+export function btnTrelloConvertNote( title ,value , id = "" ) {
+
+	return  `<div class="fieldContainer fieldContainerMargin">
+    	<input class="inf-button btn button-x" id="duplicate_task" type="button" value="Clone en note infusionsoft">
+    	<input class="inf-button btn button-x" id="copy_task" type="button" value="Copier en note infusionsoft">
+	</div>` ;  
+
+}
+

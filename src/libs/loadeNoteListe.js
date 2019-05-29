@@ -1,8 +1,5 @@
-import co from './config';
 import { lecteurTpl } from './tpl';
 
-let config = co() ; 
-let { PORT , PROT , URL } = config ;
 
 //transformation de tout les notes des pages
 //qui a les donners : NOTEID::xxx::NOTEID
@@ -10,8 +7,10 @@ let { PORT , PROT , URL } = config ;
 export default function loadeNoteListe(length) {
 
   	var noteListe = $('.noteContentText') ; 
+  	console.log( noteListe ) ; 
 	noteListe.each(async function ( index , e ) {
 		var text = $(this).text().trim() ; 
+		console.log( text )
 		if ( text.indexOf('NOTEID::') >= 0 ) {
 			let repl = text.replace(new RegExp('\r?\n','g'), '<br />'); ; 
 			let sdsd = /NOTEID::(.*)::NOTEID(.*)/gi;
@@ -24,11 +23,12 @@ export default function loadeNoteListe(length) {
 			if ( s[2] ) {
 				html = s[2] ; 
 			}
-			let url = PROT+'://'+URL+PORT+'/audio/'+ID ; 
+			let base = __OPTION__.proto+'://'+__OPTION__.domaine+(__OPTION__.port?':'+__OPTION__.port:'');
+			let url = base+'/audio/'+ID ; 
 			let last = html.trim().substr(html.length - 3);   
 				console.log( last ); 
 			if ( last === '...' ) {
-				let url = PROT+'://'+URL+PORT+'/note/'+ID+'?token='+navigator.userCookie ;  
+				let url = base+'/note/'+ID+'?token='+navigator.userCookie ;  
 				html += `<a data-url="${url}" class="readmore-note-vocaux" href="">voire plus</a>` ;
 			}
 			$(this).html( `<a target="_blank" href="${url}">${url}</a></br> 

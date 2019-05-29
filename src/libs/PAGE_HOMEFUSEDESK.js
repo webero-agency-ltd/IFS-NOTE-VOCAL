@@ -4,7 +4,7 @@ let config = co() ;
 
 export default function PAGE_HOMEFUSEDESK( ) {
   
-  	let typeId = config.CONFIG_PAGE.typeId ; 
+  	let typeId = config.typeId ; 
 	//caseActionTabs
 	let addbtn = false ; 
 	let btnAddNote = document.querySelector('#caseActionTabs li');

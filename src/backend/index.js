@@ -17,7 +17,9 @@ function connexion( data , cbl ) {
         contactId
     } = data  ; 
     setTimeout(function () {
-        client = new BinaryClient( 'ws://'+serveur+':9001?unique='+NOTEID+'&type='+type+'&typeId='+typeId+'&contactId='+contactId ) ; 
+        let url = (__OPTION__.proto=='https'?'wss':'ws')+'://'+__OPTION__.domaine+(__OPTION__.port?':'+__OPTION__.port:''); 
+        console.log( url )
+        client = new BinaryClient( url+'?unique='+NOTEID+'&type='+type+'&typeId='+typeId+'&contactId='+contactId ) ; 
         client.on('open', function() {
             stream = client.createStream();
             cbl() ; 
@@ -71,7 +73,17 @@ chrome.runtime.onMessage.addListener(function (msg, sender, response) {
         })
     }else if( stream && msg.name == 'save-stream' ){
         stream.end();
-        stream = null ; 
+        let _ended = false ; 
+        let i =  setInterval(function() {
+            if ( stream._ended && _ended === false ) {
+                _ended = true ; 
+                setTimeout(function() {
+                    clearInterval( i )
+                    emit('audio-recoreder-end-stream',true,'all') ;
+                    stream = null ;
+                }, 3000);
+            }
+        }, 300);
     } else if( client && msg.name == 'delete' ){
         client.close();
         stream = null ;
@@ -79,13 +91,16 @@ chrome.runtime.onMessage.addListener(function (msg, sender, response) {
     }  else if( msg.name == 'upload' ){
         onupload = msg.data ; 
     }  else if ( msg.name == 'cookies' ) {
-        let urlToken  = config.PROT+'://'+config.URL ; 
-        chrome.cookies.get({ url: urlToken , name: 'me_identity' },
+        let url = __OPTION__.proto+'://'+__OPTION__.domaine+(__OPTION__.port?':'+__OPTION__.port:''); 
+        console.log( url )
+        chrome.cookies.get({ url , name: 'me_identity' },
             async function (cookie) {
+                console.log( msg.data , cookie , url )
                 if (cookie) {
                     //@todo : et récupération aussi si l'utilisateur actuele a le droite de prendre des 
                     //note de cette compte infusionsoft PROT+'://'+URL+PORT+'/save/'
-                    let url =  config.PROT+'://'+config.URL+config.PORT+'/infusionsoft/check/' + msg.data + '?token=' + cookie.value; 
+                    url =  url+'/application/check/'+encodeURIComponent(msg.data.typeId)+'/'+msg.data.type+'?token=' + cookie.value; 
+                    console.log( url ) ; 
                     let check = await fetch( url ) ;
                     console.log( 'Le check se trouve ICI' , check.ok , url ) ; 
                     if ( check.ok ) { 
@@ -95,7 +110,8 @@ chrome.runtime.onMessage.addListener(function (msg, sender, response) {
                         } 
                     } 
                 }else{
-                    console.log( '--- VOTRE SESSION INTROUVABLE, AFFICHE UN MESSAGE DANS LE POPUP QUI INDIQUE QUE IL Y A UNE ERREUR DE CONNEXION A LAPPLICATION' ) ; 
+                    //ouvrire une session de connection 
+                    chrome.tabs.create( { url : url +'/logout' , active : true });
                 }
             }
         );

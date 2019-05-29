@@ -26,7 +26,8 @@ export default function PAGE_EDITTASK( ID , url , text = '') {
 
 		let formData = new FormData();
 		//@todo : récupération de tout les notes et enregistrement se fait ici. 
-		let url = config.PROT+'://'+config.URL+config.PORT+'/save/'+NOTEID+'?token='+navigator.userCookie + '&typeId='+config.CONFIG_PAGE.typeId  ; 
+		let url = __OPTION__.proto+'://'+__OPTION__.domaine+(__OPTION__.port?':'+__OPTION__.port:'');
+		url = url+'/save/'+NOTEID+'?token='+navigator.userCookie + '&typeId='+config.typeId  ; 
 		fetch(url , {
 		    method: 'POST',
 		    headers: {
@@ -40,7 +41,8 @@ export default function PAGE_EDITTASK( ID , url , text = '') {
 
 		let formData = new FormData();
 		//@todo : récupération de tout les notes et enregistrement se fait ici. 
-		let url = config.PROT+'://'+config.URL+config.PORT+'/save/'+NOTEID+'?token='+navigator.userCookie + '&typeId='+config.CONFIG_PAGE.typeId  ; 
+		let url = __OPTION__.proto+'://'+__OPTION__.domaine+(__OPTION__.port?':'+__OPTION__.port:'');
+		url = url+'/save/'+NOTEID+'?token='+navigator.userCookie + '&typeId='+config.typeId  ; 
 		fetch(url , {
 		    method: 'POST',
 		    headers: {

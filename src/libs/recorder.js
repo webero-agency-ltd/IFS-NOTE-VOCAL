@@ -13,7 +13,6 @@ import pauseall from '../libs/pauseall';
 import { recorder } from './DOM' ; 
 
 let config = co() ; 
-let { URL , PROT , PORT } = config ;
 
 let context = null ; 
 class recordClass{
@@ -25,6 +24,8 @@ class recordClass{
 		this.chrono = false ;
 		this.dom = {} ; 
 		this.urlPrelisten = null ; 
+		this.onSave = null ;
+		this.startCLB = null ; 
 	}
 	//on demande au serveur de commencer une enregistrement 
 	//si le reserveur répond OK, le backend lance une evenement 
@@ -50,7 +51,7 @@ class recordClass{
 		//desactiver le button de création de note ( validation de note d'infusionsoft ), et de couleur vert
 		noteSave.attr('disabled','disabled') ;
 		//demande de connexion au serveur 
-    	$emit('connexion' , { NOTEID : this.NOTEID , type : 'infusionsoft' , typeId : config.CONFIG_PAGE.typeId , contactId : config.CONFIG_PAGE.contactId }) ; 
+    	$emit('connexion' , { NOTEID : this.NOTEID , type : 'infusionsoft' , typeId : config.typeId , contactId : config.contactId }) ; 
 	}
 	stop(){
 		//stop l'enregistrement 
@@ -61,7 +62,7 @@ class recordClass{
 		btnRun.attr('disabled','disabled') ;
 		btnRun.val('Enregistrer') ; 
 		//affichage du préécoute 
-		let url = PROT+'://'+URL+PORT+'/audio/'+ this.NOTEID +'/?token='+makeid(60) ;
+		let url = __OPTION__.proto+'://'+__OPTION__.domaine+(__OPTION__.port?':'+__OPTION__.port:'') +'/audio/'+ this.NOTEID +'/?token='+makeid(60) ; 
 		let tpl = lecteurTpl( url , 'audio-liste-note-recordin' ) ; 
 		listenContent.html( tpl ) ; 
 		listenContent.show() ;
@@ -158,6 +159,13 @@ class recordClass{
 			}
 			this.recording = true;
 		})
+
+		$on('audio-recoreder-end-stream', () => {
+			if ( this.onSave ) {
+				this.onSave()
+			}
+		})
+		
 		return this.makeid( ID ) ; 
 	}
 
@@ -172,7 +180,8 @@ class recordClass{
 		})
 		btnDelete.on( 'click' , async () => {
 			this.chrono.reset() ;
-			let url = PROT+'://'+URL+PORT+'/audio/delete/'+ this.NOTEID ;
+			let url = __OPTION__.proto+'://'+__OPTION__.domaine+(__OPTION__.port?':'+__OPTION__.port:'');	
+			url = url+'/audio/delete/'+ this.NOTEID ;
 			this.delete( url ) ;
 		})
 		audioUpload.on( 'change' , async (ev) => {
@@ -191,9 +200,10 @@ class recordClass{
 				let formData = new FormData();
 				formData.append('file', ev.target.files[0] );
 				//faire l'uploade automatiquement 
-				let url = PROT+'://'+URL+PORT+'/upload?unique='+this.NOTEID+'&type=infusionsoft&typeId='+config.CONFIG_PAGE.typeId+'&contactId='+config.CONFIG_PAGE.contactId  ;
-				$emit('upload', PROT+'://'+URL+PORT+'/close/'+this.NOTEID )
-				let uploadResponse = await fetch( url , {
+				let url = __OPTION__.proto+'://'+__OPTION__.domaine+(__OPTION__.port?':'+__OPTION__.port:'');	
+				let _url = url+'/upload?unique='+this.NOTEID+'&type=infusionsoft&typeId='+config.typeId+'&contactId='+config.contactId  ;
+				$emit('upload', url+'/close/'+this.NOTEID )
+				let uploadResponse = await fetch( _url , {
 				    method: 'POST',
 				    headers: {
 				      	//'Content-Type': 'multipart/form-data'
@@ -207,6 +217,9 @@ class recordClass{
 					listenContent.html(lecteurTpl( url , 'audio-liste-note-upload' )) ;
 					listenContent.show() ;
 					noteSave.removeAttr('disabled') ; 
+					if ( this.onSave ) {
+						this.onSave()
+					}
 			    }
 			    //Tout les button son de nouveaux clicable 
 				setTimeout(function () {

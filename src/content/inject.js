@@ -6,11 +6,11 @@ import PAGE_HOMENOTE from '../libs/PAGE_HOMENOTE' ;
 import PAGE_HOMENOTEMODALE from '../libs/PAGE_HOMENOTEMODALE' ; 
 import PAGE_EDITTASK from '../libs/PAGE_EDITTASK' ; 
 import PAGE_HOMEFUSEDESK from '../libs/PAGE_HOMEFUSEDESK' ; 
+import PAGE_TRELLO from '../libs/PAGE_TRELLO' ; 
 
 require('../libs/pluginJquery') ; 
  
 let config = co() ; 
-let { PORT , PROT , URL } = config ;
 navigator.userCookie = null ; 
 
 //vérification si le navigateur supporte l'enregistrement audio 
@@ -39,12 +39,14 @@ $on('audio-recoreder-init',function ( cookie ) {
 		init = true ; 
 
 	navigator.userCookie = cookie.value ;
+
 	jQuery(document).ready(function($) { 
 		if( ! ready )
 			return alert('getUserMedia non pris en charge par ce navigateur.');
-
 		let firstLoad = null ; 
-		if ( config.CONFIG_PAGE.page == 'EDITNOTE' ) {
+	console.log( '_____________________________' )
+	console.log( config.page )
+		if ( config.page == 'EDITNOTE' ) {
 			//écouter un élement du dom de la page, si cette element est présent
 			//on affiche la page edit note 
 			readydom('body',function () {
@@ -54,7 +56,7 @@ $on('audio-recoreder-init',function ( cookie ) {
 				}
 			})
 		}
-		else if(  config.CONFIG_PAGE.page == 'EDITTASK' ){
+		else if(  config.page == 'EDITTASK' ){
 			readydom('#Task0CreationNotes',function () {
 				let ID = '' ; 
 				let html = '' ; 
@@ -73,7 +75,8 @@ $on('audio-recoreder-init',function ( cookie ) {
 						if ( s[2] ) {
 							html = s[2] ; 
 						} 
-						url = PROT+'://'+URL+PORT+'/audio/'+ID ; 
+						let url = __OPTION__.proto+'://'+__OPTION__.domaine+(__OPTION__.port?':'+__OPTION__.port:'');
+						url = url+'/audio/'+ID ; 
 						//ici on check qu'on a bien un notes dans l'update 
 					}
 					PAGE_EDITTASK( ID , url , text.replace(new RegExp(/NOTEID::(.*)::NOTEID/,'gi'), '').trim() ) 
@@ -81,7 +84,7 @@ $on('audio-recoreder-init',function ( cookie ) {
 				}
 			})
 		}
-		else if ( config.CONFIG_PAGE.page == "HOMENOTE" ) {
+		else if ( config.page == "HOMENOTE" ) {
 			readydom('body',function () {
 				if ( !firstLoad ) {
 					PAGE_HOMENOTE() 
@@ -89,7 +92,7 @@ $on('audio-recoreder-init',function ( cookie ) {
 				}
 			})
 		}
-		else if ( config.CONFIG_PAGE.page == 'HOMENOTEMODALE' ) {
+		else if ( config.page == 'HOMENOTEMODALE' ) {
 			readydom('body',function () {
 				if ( !firstLoad ) {
 					PAGE_HOMENOTEMODALE() 
@@ -97,7 +100,7 @@ $on('audio-recoreder-init',function ( cookie ) {
 				}
 			})
 		}
-		else if( config.CONFIG_PAGE.page =='HOMEFUSEDESK'){
+		else if( config.page =='HOMEFUSEDESK'){
 			readydom('#caseActionTabs',function () {
 				if ( !firstLoad ) {
 					PAGE_HOMEFUSEDESK() 
@@ -105,7 +108,7 @@ $on('audio-recoreder-init',function ( cookie ) {
 				}
 			})
 		}
-		else if( config.CONFIG_PAGE.page =='CHEKUPDATENOTE'){
+		else if( config.page =='CHEKUPDATENOTE'){
 			readydom('#notes',function () {
 				let text = $('#notes').text().trim() ; 
 				let ID = '' ; 
@@ -121,10 +124,20 @@ $on('audio-recoreder-init',function ( cookie ) {
 					if ( s[2] ) {
 						html = s[2] ; 
 					}
-					url = PROT+'://'+URL+PORT+'/audio/'+ID ; 
+					let url = __OPTION__.proto+'://'+__OPTION__.domaine+(__OPTION__.port?':'+__OPTION__.port:'');
+					url = url+'/audio/'+ID ; 
 					//ici on check qu'on a bien un notes dans l'update 
 				}
 				PAGE_EDITNOTE( ID , url , text )
+			})
+		}
+		else if( config.page =='TRELLO'){
+			readydom('#board',function () {
+				//Récupération des urls dans le serveur pour voire si c'est un note vocal ou pas 
+				let ID = null ; 
+				let url = null ; 
+				let text = null ; 
+				PAGE_TRELLO( ID , url , text )
 			})
 		}
 		/*
@@ -161,4 +174,4 @@ $on('audio-recoreder-init',function ( cookie ) {
 })
 chrome.runtime.connect();
 
-$emit('cookies',config.CONFIG_PAGE.typeId)
+$emit('cookies',config)

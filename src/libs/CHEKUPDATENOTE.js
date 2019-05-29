@@ -3,9 +3,8 @@ import { editnote } from './DOM' ;
 import { title , soncas , produit , closing } from './select'; 
 import { recordedTpl , lecteurTpl , selectTpl , areaTpl , recordedTpltask } from '../libs/tpl';
 import co from '../libs/config';
-
 let config = co() ; 
-let { serveur , port } = config.URL ;
+
 //initialisation de l'object recoder qui va nous permètre d'afficher l'enregistrement de note 
 let obrecod = r() ; 
 let generaleNote = '' ;
@@ -138,12 +137,12 @@ export default function PAGE_EDITNOTE(length) {
 
 	//on clique sur l'enregistrement de note 
 	noteSave.on('click', () => {
-
 		console.log(' CLICK save')
 		console.log( { text : generaleNote , title : generaleTitle } ) ; 
 		let formData = new FormData();
+		let url = __OPTION__.proto+'://'+__OPTION__.domaine+(__OPTION__.port?':'+__OPTION__.port:'');
 		//@todo : récupération de tout les notes et enregistrement se fait ici. 
-		let url = config.PROT+'://'+config.URL+config.PORT+'/save/'+NOTEID+'?token='+navigator.userCookie + '&typeId='+config.CONFIG_PAGE.typeId  ; 
+		url+'/save/'+NOTEID+'?token='+navigator.userCookie + '&typeId='+config.typeId  ; 
 		console.log( url ) ; 
 		fetch(url , {
 		    method: 'POST',

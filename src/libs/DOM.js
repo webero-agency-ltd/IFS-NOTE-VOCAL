@@ -19,6 +19,17 @@ export function editnote() {
   	}
 }
 
+//DOM de selection de trello 
+export function trellodom() {
+    //selection du boutton qui permet d'ajouter des notes dans ifs
+    return {
+      btnAddNote : $('.js-plugin-sections') ,  
+      //actionType : $('#actionType') , 
+      title : $('.js-card-detail-title-input') , 
+      //noteSave : $('#noteSave') , 
+    }
+}
+
 //selection des dom de l'élement recorder 
 export function recorder() {
   	//selection du boutton qui permet d'ajouter des notes dans ifs

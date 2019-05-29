@@ -4,6 +4,16 @@ const {cssLoaders, htmlPage} = require('./tools')
 const CopyWebpackPlugin = require('copy-webpack-plugin')
 const GenerateJsonPlugin = require('generate-json-webpack-plugin');
 const ChromeReloadPlugin  = require('wcer')
+const parse = require('./parse')
+
+let apiHost = null ; 
+let setupConfig = function (argument) {
+  apiHost = JSON.stringify({
+    ...parse( process.argv )
+  })
+}
+
+setupConfig() ; 
 
 let resolve = dir => path.join(__dirname, '..', 'src', dir)
 module.exports = {
@@ -91,11 +101,14 @@ module.exports = {
       port: 9090,
       manifest: path.join(__dirname, '..', 'src', 'manifest.js')
     }),*/
-    new GenerateJsonPlugin('../build/manifest.json', require('../src/manifest.js')),
     new webpack.ProvidePlugin({
         $: "jquery",
         jQuery: "jquery"
     }),
+    new webpack.DefinePlugin({
+      __OPTION__ : apiHost
+    }),
+    new GenerateJsonPlugin('../build/manifest.json', require('../src/manifest.js')),
   ],
   performance: { hints: false },
 }

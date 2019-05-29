@@ -46,8 +46,8 @@
   },
   "scripts": {
     "lint": "eslint --ext .js,.vue src",
-    "dev": "webpack --config ./core/webpack.dev.js --hide-modules ",
-    "build": "webpack --config ./core/webpack.prod.js -p --progress  --hide-modules --colors"
+    "dev": "webpack --config ./core/webpack.dev.js --hide-modules  --env.domaine=localhost --env.port=3000 --env.proto=http",
+    "prod": "webpack --config ./core/webpack.dev.js --hide-modules  --env.domaine=therapiequantique.net  --env.proto=https"
   },
   "devDependencies": {
     "@types/body-parser": "^1.17.0",

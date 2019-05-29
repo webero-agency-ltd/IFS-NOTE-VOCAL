@@ -1,16 +1,19 @@
+const parse = require('../core/parse')
+const arg = parse(process.argv) ; 
 
 module.exports = {
   name: 'IFS-NOTE-VOCAL',
-  version: '0.0.3',
+  version: '0.1.1',
   description: 'Ajout de node vocale a infusionsoft',
   author: 'Andriamihaja Heldino herbert',
   manifest_version: 2,
   icons: {
     "128": "icons/icon.png"
-  },
+  }, 
   permissions: [
-    '*://*.therapiequantique.net/*', 
+    `https://*.${arg.domaine}/*`, 
     "https://*.infusionsoft.com/*",
+    "https://trello.com/*",
     "storage", 
     "tabs", 
     "alarms", 
@@ -21,10 +24,10 @@ module.exports = {
     "cookies"
   ],
   /*
-    page_action: {
-      default_title: 'scraping',
+  page_action: {
+      default_title: 'option vocal note',
       default_popup: 'pages/popup.html'
-    },
+  },
   */
   background: {
     "scripts": ["js/background.js"],
@@ -39,6 +42,10 @@ module.exports = {
   },{
     js: [ 'js/inject.js' ],
     matches: ['https://*.fusedesk.com/app/*'],
+    //all_frames: true
+  },{
+    js: [ 'js/inject.js' ],
+    matches: ['https://trello.com/*'],
     //all_frames: true
   }],
   content_security_policy: "script-src https://cdn.rawgit.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'self' 'unsafe-eval' ; object-src 'self'",
