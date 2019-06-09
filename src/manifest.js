@@ -3,7 +3,7 @@ const arg = parse(process.argv) ;
 
 module.exports = {
   name: 'IFS-NOTE-VOCAL',
-  version: '0.1.1',
+  version: '2.0.0',
   description: 'Ajout de node vocale a infusionsoft',
   author: 'Andriamihaja Heldino herbert',
   manifest_version: 2,

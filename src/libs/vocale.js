@@ -10,26 +10,21 @@ export class Vocale {
         var rec;                           
         var input;  
         let chrono;  
-
         chrono = timer() ;
         chrono.setcallback(function ( time ) {
             document.getElementById('counter-recorded').value = time ; 
         })            
-        //.reset() ;         
-
         var AudioContext = window.AudioContext || window.webkitAudioContext;
         var audioContext //audio context to help us record
-
         var recordButton = document.getElementById("recordButton");
+        var recordButtonLoader = document.getElementById("recordButtonLoader");
         var stopButton = document.getElementById("stopButton");
         var pauseButton = document.getElementById("pauseButton");
         var logoRecorder = document.getElementById("logo-recorded");
         var recorderInfo = document.getElementById("recorder-info");
         var uploadButton = document.getElementById("uploadButton");
         var audioUpload = document.getElementById("audio-upload");
-
         console.log( recordButton )
-
         recordButton.addEventListener("click", startRecording);
         stopButton.addEventListener("click", stopRecording);
         uploadButton.addEventListener("click", ( e )=>{
@@ -39,16 +34,13 @@ export class Vocale {
         });
         audioUpload.addEventListener("change", uploadFile);
         //pauseButton.addEventListener("click", pauseRecording);
-        
         let $this = this ; 
-
         //ici on veut faire l'upload de fichier 
         function uploadFile( upload ){
             if ( $this.recorder ) {
                 $this.recorder( upload.target.files[0] )
             }
         }
-
         function startRecording(e) {
             console.log("recordButton clicked");
             e.preventDefault()
@@ -57,9 +49,10 @@ export class Vocale {
             recordButton.disabled = true;
             stopButton.disabled = false;
             //pauseButton.disabled = false
-
+            recordButtonLoader.style.display = 'inline-block';
             navigator.mediaDevices.getUserMedia(constraints).then(function(stream) {
                 console.log("getUserMedia() success, stream created, initializing Recorder.js ...");
+                recordButtonLoader.style.display = 'none';
                 audioContext = new AudioContext();
                 //document.getElementById("formats").innerHTML="Format: 1 channel pcm @ "+audioContext.sampleRate/1000+"kHz"
                 gumStream = stream;
@@ -146,30 +139,61 @@ export class Vocale {
         }
     }
 
+    upload(){
+        document.getElementById("loaderUploadVocalNote").style.display = 'inline-block';
+    }
+
+    stopUpload(){
+        document.getElementById("loaderUploadVocalNote").style.display = 'none';
+    }
+
     static
     init( content ) {
         let tpl = `<div id="recorder-info" style="display: none;">
             <div style="display: flex;">
                 <div id="logo-recorded" class="recorder-style active "></div>
-            <input id="counter-recorded" style="width: 100px; margin-left: 6px;" disabled="disabled" name="timer" type="text" value="00 : 00" />
+                <input id="counter-recorded" style="width: 100px; margin-left: 6px;" disabled="disabled" name="timer" type="text" value="00 : 00" />
             </div>
         </div>
         <div id="controls" style="display:flex;">
-            <button class="btn btn-info btn-block" id="recordButton">Record</button>
+            <button class="btn btn-recorder" id="recordButton">
+                <i style="display:none; vertical-align: middle; " class="spinner_vocal" id="recordButtonLoader"></i>
+                Record
+            </button>
             <!--<button id="pauseButton" disabled>Pause</button>-->
-            <button class="btn btn-info btn-block" id="stopButton" disabled>Stop</button>
+            <button class="btn btn-recorder" id="stopButton" disabled>Stop</button>
             <!--<button id="deleteButton" disabled>Effacer</button>-->
-            <button class="btn btn-info btn-block" id="uploadButton">Télécharger</button>
+            <button class="btn btn-recorder" id="uploadButton">Télécharger</button>
             <input style="position: absolute; top: -30000px; left: -30000px;" type="file" id="audio-upload" name="avatar" accept="audio/*">
         </div>
         <style>
-            .btn-info.disabled, .btn-info:disabled {
+            .btn-recorder{
                 color: #191919 !important;
                 background-color: #b3d1e0 !important;
                 border-color: #191919 !important;
             }
+            .spinner_vocal {
+                border-radius: 50%;
+                border-top: 2px solid rgba(48,48,64,.2);
+                border-right: 2px solid rgba(48,48,64,.2);
+                border-bottom: 2px solid rgba(48,48,64,.2);
+                border-left: 2px solid #4a5358;
+                display: inline-block;
+                width: 10px;
+                height: 10px;
+                transform: translateZ(0);
+                -webkit-transform: translateZ(0);
+                animation: spin 1s infinite linear;
+                -webkit-animation: spin 1s infinite linear;
+            }
+            .btn-recorder:disabled {
+                color: #404040 !important;
+                background-color: #e7e8e8 !important;
+                border-color: #b7b7b7 !important;
+            }
         </style>
-        <div id="recordingsList"></div>`;
+        <div id="recordingsList"></div>
+        <div id="loaderUploadVocalNote" style="display:none;" ><div style="display:inline-block;" class="spinner_vocal"></div>... UPLOAD</div>`;
         let c = document.getElementById( content ) ;
         content.before( tpl ) 
         return

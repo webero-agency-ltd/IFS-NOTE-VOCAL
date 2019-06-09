@@ -21,6 +21,10 @@ export default function PAGE_EDITTASK( ID , url , text = '') {
 		NOTEID = makeid( 16 ) ; 
 	} else{
 		NOTEID = ID ; 
+        setTimeout(function() {
+            let base = __OPTION__.proto+'://'+__OPTION__.domaine+(__OPTION__.port?':'+__OPTION__.port:'');
+            new listen( 'recordingsList' , base+'/audio/'+ID , 'audio-liste-note-record' )
+        }, 1000);
 	}
     let vo = new Vocale()
     //enregistrement terminer
@@ -42,59 +46,67 @@ export default function PAGE_EDITTASK( ID , url , text = '') {
 		console.log( value ) ; 
 	})
 	noteSave.hide() ; 
-    noteSave.before( '<input '+(desable?'disabled="disabled"':'')+' class="inf-button btn primary button-save" id="noteSaveTemp" name="Save" type="submit" value="Save">' ) ; 
-    noteSave.before( '<input '+(desable?'disabled="disabled"':'')+' value="Save &amp; New" type="submit" id="SaveAndNewTemp" class="default-input button-save np inf-button" name="SaveAndNew">' ) ; 
+    noteSave.before( '<button '+(desable?'disabled="disabled"':'')+' class="inf-button btn primary button-save" id="noteSaveTemp">Save</button>' ) ; 
+    noteSave.before( '<button '+(desable?'disabled="disabled"':'')+' type="submit" id="SaveAndNewTemp" class="default-input button-save np inf-button">Save New</button>' ) ; 
 
     $('body').on('click','#noteSaveTemp', async ( e ) => {
+        $('#noteSaveTemp').html('<i style="display:inline-block; vertical-align: middle; " class="spinner_vocal"></i>...Upload');
 		e.preventDefault() ;
 		e.stopPropagation() ;
-		let url = __OPTION__.proto+'://'+__OPTION__.domaine+(__OPTION__.port?':'+__OPTION__.port:'');
-		url = url+'/upload?token='+navigator.userCookie + '&typeId='+config.typeId  ; 
-		console.log( url ) ;
-		let formData = new FormData();
-        formData.append('file', note );
-        url += 'token='+navigator.userCookie
-        url += '&NOTEID='+NOTEID
-        url += '&type=infusionsoft' 
-        url += '&appId='+navigator.appId
-        url += '&text='
-        url += '&title='
-        let upload = await fetch( url , {
-            method: 'POST',
-            headers: {
-                //'Content-Type': 'multipart/form-data'
-            },
-            body: formData
-        })
-        if ( upload.ok ) {
-        	noteSave.trigger('click')
-        }
+        setTimeout( async function() {
+    		let url = __OPTION__.proto+'://'+__OPTION__.domaine+(__OPTION__.port?':'+__OPTION__.port:'');
+    		url = url+'/upload?token='+navigator.userCookie + '&typeId='+config.typeId  ; 
+    		console.log( url ) ;
+    		let formData = new FormData();
+            formData.append('file', note );
+            url += 'token='+navigator.userCookie
+            url += '&NOTEID='+NOTEID
+            url += '&type=infusionsoft' 
+            url += '&appId='+navigator.appId
+            url += '&text='
+            url += '&title='
+            let upload = await fetch( url , {
+                method: 'POST',
+                headers: {
+                    //'Content-Type': 'multipart/form-data'
+                },
+                body: formData
+            })
+            if ( upload.ok ) {
+                $('#noteSaveTemp').html('Save');
+            	noteSave.trigger('click')
+            }
+        }, 500);
     })
 
     $('body').on('click','#SaveAndNewTemp', async ( e ) => {
+        $('#SaveAndNewTemp').html('<i style="display:inline-block; vertical-align: middle; " class="spinner_vocal"></i>...Upload');
 		e.preventDefault() ;
 		e.stopPropagation() ;
-		let url = __OPTION__.proto+'://'+__OPTION__.domaine+(__OPTION__.port?':'+__OPTION__.port:'');
-		url = url+'/upload?token='+navigator.userCookie + '&typeId='+config.typeId  ; 
-		console.log( url ) ;
-		let formData = new FormData();
-        formData.append('file', note );
-        url += 'token='+navigator.userCookie
-        url += '&NOTEID='+NOTEID
-        url += '&type=infusionsoft' 
-        url += '&appId='+navigator.appId
-        url += '&text='
-        url += '&title='
-        let upload = await fetch( url , {
-            method: 'POST',
-            headers: {
-                //'Content-Type': 'multipart/form-data'
-            },
-            body: formData
-        })
-        if ( upload.ok ) {
-        	SaveAndNew.trigger('click')
-        }
+        setTimeout( async function() {
+    		let url = __OPTION__.proto+'://'+__OPTION__.domaine+(__OPTION__.port?':'+__OPTION__.port:'');
+    		url = url+'/upload?token='+navigator.userCookie + '&typeId='+config.typeId  ; 
+    		console.log( url ) ;
+    		let formData = new FormData();
+            formData.append('file', note );
+            url += 'token='+navigator.userCookie
+            url += '&NOTEID='+NOTEID
+            url += '&type=infusionsoft' 
+            url += '&appId='+navigator.appId
+            url += '&text='
+            url += '&title='
+            let upload = await fetch( url , {
+                method: 'POST',
+                headers: {
+                    //'Content-Type': 'multipart/form-data'
+                },
+                body: formData
+            })
+            if ( upload.ok ) {
+                $('#noteSaveTemp').html('Save New');
+            	SaveAndNew.trigger('click')
+            }
+        }, 500);
     })
 
 }

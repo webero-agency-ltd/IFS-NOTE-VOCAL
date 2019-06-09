@@ -66,8 +66,6 @@ $on('audio-recoreder-init',function ( { cookie , application } ) {
 						let repl = text.replace(new RegExp('\r?\n','g'), ''); ; 
 						let sdsd = /NOTEID::(.*)::NOTEID(.*)/gi;
 						let s = sdsd.exec(repl);
-						let ID = '' ; 
-						let html = '' ; 
 						if ( s[1] ) {
 							ID = s[1] ; 
 						}

@@ -54,6 +54,7 @@ export default function PAGE_TRELLO( ID , url , HTML ) {
 		    vo.recorder = async function ( blob  ) {
 		        new listen( 'recordingsList' , URL.createObjectURL(blob) , 'audio-liste-note-record' )
 		        note = blob ; 
+	        	vo.upload()
 		        //upload automatique apres chaque changement 
 		    	let url = __OPTION__.proto+'://'+__OPTION__.domaine+(__OPTION__.port?':'+__OPTION__.port:'');
 				url = url+'/upload?token='+navigator.userCookie + '&typeId='+config.typeId  ; 
@@ -73,6 +74,7 @@ export default function PAGE_TRELLO( ID , url , HTML ) {
 		            },
 		            body: formData
 		        })
+	        	vo.stopUpload()
 		    } 
 			btnAddNote.before( btnTrelloConvertNote() ) ; 
 			readydom('#duplicate_task', () => {
