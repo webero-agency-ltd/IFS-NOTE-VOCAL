@@ -31,21 +31,20 @@ $on('force-close-tab-save-note',function () {
 let init = false ; 
 
 //initialisation de tout l'application 
-$on('audio-recoreder-init',function ( cookie ) {
-
+$on('audio-recoreder-init',function ( { cookie , application } ) {
 	if ( init ) 
 		return ; 
 	else 
 		init = true ; 
-
+	console.log( application )
+	navigator.appId = application.id ;
 	navigator.userCookie = cookie.value ;
-
 	jQuery(document).ready(function($) { 
 		if( ! ready )
 			return alert('getUserMedia non pris en charge par ce navigateur.');
 		let firstLoad = null ; 
-	console.log( '_____________________________' )
-	console.log( config.page )
+		console.log( '_____________________________' )
+		console.log( config.page )
 		if ( config.page == 'EDITNOTE' ) {
 			//écouter un élement du dom de la page, si cette element est présent
 			//on affiche la page edit note 
@@ -173,5 +172,4 @@ $on('audio-recoreder-init',function ( cookie ) {
 	});
 })
 chrome.runtime.connect();
-
 $emit('cookies',config)

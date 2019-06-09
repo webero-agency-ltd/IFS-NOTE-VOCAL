@@ -3,11 +3,11 @@ import { editnote } from './DOM' ;
 import { title , soncas , produit , closing } from './select'; 
 import { recordedTpl , lecteurTpl , selectTpl , areaTpl , recordedTpltask } from '../libs/tpl';
 import co from '../libs/config';
-let config = co() ; 
-console.log( config ) ; 
+import Vocale from '../libs/vocale';
+import listen from '../libs/listen';
+import makeid from './makeid';
 
-//initialisation de l'object recoder qui va nous permètre d'afficher l'enregistrement de note 
-let obrecod = r() ; 
+let config = co() ; 
 let generaleNote = '' ;
 let generaleTitle = '' ;
 
@@ -59,8 +59,6 @@ function formatDesc( NOTEID , selectSoncas , selectProduit , comment , selectClo
 }	
 
 function preformateUpdate( HTML ) {
-
-	console.log( HTML )
 	let soncas_pre = [] ; 
 	let produit_pre = [] ; 
 	let closing_pre = '' ; 
@@ -96,7 +94,6 @@ function preformateUpdate( HTML ) {
 		return false
 	})
 	produit_pre=produit_pre.map( e => e.replace(new RegExp('-','g'), '').trim() ) ; 
-
 	step = false ; 
 	atep = false ; 
 	closing_pre = ss.filter(function (e) {
@@ -111,7 +108,6 @@ function preformateUpdate( HTML ) {
 		return false
 	})
 	closing_pre=closing_pre.map( e => e.replace(new RegExp('-','g'), '').trim() ) ; 
-
 	step = false ; 
 	atep = false ; 
 	comment_pre = ss.filter(function (e) {
@@ -124,23 +120,40 @@ function preformateUpdate( HTML ) {
 		return false
 	})
 	return { comment : comment_pre.length>0?comment_pre.join("\n"):'' , closing : closing_pre , produit : produit_pre , soncas : soncas_pre }
-
 }
 
 export default function PAGE_EDITNOTE( ID , url , HTML ) {
 
 	let { btnAddNote , actionType , sujet , noteSave } = editnote() ;
+	let init = Vocale.init( btnAddNote ) ;
+	let note = null ; 
+	let NOTEID = null ;
+	if ( !ID ) {
+		NOTEID = makeid( 16 ) ; 
+	} else{
+		NOTEID = ID ; 
+	}
+    let vo = new Vocale()
+    //enregistrement terminer
+    vo.recorder = function ( blob  ) {
+        var url = URL.createObjectURL(blob);
+        new listen( 'recordingsList' , url , 'audio-liste-note-record' )
+        note = blob ; 
+        $('#noteSaveTemp').attr('disabled',false)
+    }
+    console.log( btnAddNote )
   	//Ajout du template d'enregistrement dans infusionsoft
-    btnAddNote.before( recordedTpl(obrecod.recorder()) ) ; 
+    //btnAddNote.before( recordedTpl(obrecod.recorder()) ) ; 
 	//initialisation du DOM de l'application 
-	let NOTEID = obrecod.init( ID , url ) ; 
+	//let NOTEID = obrecod.init( ID , url ) ; 
 	//recherche de tout les informations précedement ajouter dans la notes 
 	/////////////
 	let placeholder = null ; 
+	let desable = false ; 
 	if ( HTML ) {
 		placeholder = preformateUpdate( HTML )
 	}else{
-		noteSave.attr('disabled','disabled') ;	
+		desable = true
 	}
 	console.log( placeholder )
 	//ici on fait la modification des valeurs boutton 
@@ -231,23 +244,34 @@ export default function PAGE_EDITNOTE( ID , url , HTML ) {
 		}
 	})
 
+	noteSave.hide() ; 
 	//on clique sur l'enregistrement de note 
-	noteSave.on('click', () => {
-
-		console.log(' CLICK save')
-		console.log( { text : generaleNote , title : generaleTitle } ) ; 
-		let formData = new FormData();
-		//@todo : récupération de tout les notes et enregistrement se fait ici. 
+    noteSave.before( '<input '+(desable?'disabled="disabled"':'')+' class="inf-button btn primary button-save" id="noteSaveTemp" name="Save" type="submit" value="Save">' ) ; 
+	
+	$('body').on('click','#noteSaveTemp', async ( e ) => {
+		e.preventDefault() ;
+		e.stopPropagation() ;
 		let url = __OPTION__.proto+'://'+__OPTION__.domaine+(__OPTION__.port?':'+__OPTION__.port:'');
-		url = url+'/save/'+NOTEID+'?token='+navigator.userCookie + '&typeId='+config.typeId  ; 
-		console.log( url ) ; 
-		fetch(url , {
-		    method: 'POST',
-		    headers: {
-		      	'Accept': 'application/json',
-                'Content-Type': 'application/json'
-		    },
-		    body: JSON.stringify({ type : 'note', text : generaleNote , title : generaleTitle })
-		}) ;
-	})
+		url = url+'/upload?token='+navigator.userCookie + '&typeId='+config.typeId  ; 
+		console.log( url ) ;
+		let formData = new FormData();
+        formData.append('file', note );
+        url += 'token='+navigator.userCookie
+        url += '&NOTEID='+NOTEID
+        url += '&type=infusionsoft' 
+        url += '&appId='+navigator.appId
+        url += '&text='+generaleNote
+        url += '&title='+generaleTitle
+        let upload = await fetch( url , {
+            method: 'POST',
+            headers: {
+                //'Content-Type': 'multipart/form-data'
+            },
+            body: formData
+        })
+        if ( upload.ok ) {
+        	noteSave.trigger('click')
+        }
+    })
+
 }

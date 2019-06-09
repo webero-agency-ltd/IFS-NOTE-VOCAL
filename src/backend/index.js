@@ -63,54 +63,27 @@ function emit(e,d,_tab) {
 }
 
 chrome.runtime.onMessage.addListener(function (msg, sender, response) {
-    if ( stream && msg.name=='stream' ) {
-        var arr = new Float32Array( msg.data );
-        stream.write(convertFloat32ToInt16( arr ));
-    }
-    else if( msg.name=='connexion' && ! stream ){
-        connexion( msg.data , function () {
-            emit('connexion-soket-note-vocaux',true,'all') ;
-        })
-    }else if( stream && msg.name == 'save-stream' ){
-        stream.end();
-        let _ended = false ; 
-        let i =  setInterval(function() {
-            if ( stream._ended && _ended === false ) {
-                _ended = true ; 
-                setTimeout(function() {
-                    clearInterval( i )
-                    emit('audio-recoreder-end-stream',true,'all') ;
-                    stream = null ;
-                }, 3000);
-            }
-        }, 300);
-    } else if( client && msg.name == 'delete' ){
-        client.close();
-        stream = null ;
-        client = null ; 
-    }  else if( msg.name == 'upload' ){
+    if( msg.name == 'upload' ){
         onupload = msg.data ; 
     }  else if ( msg.name == 'cookies' ) {
         let url = __OPTION__.proto+'://'+__OPTION__.domaine+(__OPTION__.port?':'+__OPTION__.port:''); 
         console.log( url )
         chrome.cookies.get({ url , name: 'me_identity' },
             async function (cookie) {
-                console.log( msg.data , cookie , url )
                 if (cookie) {
                     //@todo : et récupération aussi si l'utilisateur actuele a le droite de prendre des 
                     //note de cette compte infusionsoft PROT+'://'+URL+PORT+'/save/'
                     url =  url+'/application/check/'+encodeURIComponent(msg.data.typeId)+'/'+msg.data.type+'?token=' + cookie.value; 
-                    console.log( url ) ; 
                     let check = await fetch( url ) ;
                     console.log( 'Le check se trouve ICI' , check.ok , url ) ; 
                     if ( check.ok ) { 
                         let data = await check.json() ;
-                        if ( data.success ) {
-                            emit('audio-recoreder-init',cookie,'all') ;
+                        if ( data.data ) {
+                            console.log( data )
+                            emit('audio-recoreder-init',{ cookie , application : data.data },'all') ;
                         } 
                     } 
                 }else{
-                    //ouvrire une session de connection 
                     chrome.tabs.create( { url : url +'/logout' , active : true });
                 }
             }
@@ -122,17 +95,7 @@ chrome.runtime.onMessage.addListener(function (msg, sender, response) {
 chrome.runtime.onConnect.addListener(function (externalPort) {
     onupload = false ; 
     externalPort.onDisconnect.addListener(async function() {
-        if( client ){
-            setTimeout(function (argument) {
-                if( client ){
-                    client.close() ;
-                    stream = null ;
-                    client = null ; 
-                }
-            }, 1500);
-        }else if ( onupload ) {
-            await fetch( onupload )   ;
-        }
+
     });
 })
 
