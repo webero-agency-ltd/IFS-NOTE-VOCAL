@@ -6,6 +6,7 @@ import co from '../libs/config';
 import Vocale from '../libs/vocale';
 import listen from '../libs/listen';
 import makeid from './makeid';
+import { $on , $emit } from '../libs/event';
 
 let config = co() ; 
 let generaleNote = '' ;
@@ -122,7 +123,7 @@ function preformateUpdate( HTML ) {
 	return { comment : comment_pre.length>0?comment_pre.join("\n"):'' , closing : closing_pre , produit : produit_pre , soncas : soncas_pre }
 }
 
-export default function PAGE_EDITNOTE( ID , url , HTML ) {
+export default async function PAGE_EDITNOTE( ID , url , HTML ) {
 
 	let { btnAddNote , actionType , sujet , noteSave } = editnote() ;
 	let init = Vocale.init( btnAddNote ) ;
@@ -211,6 +212,7 @@ export default function PAGE_EDITNOTE( ID , url , HTML ) {
 			}
 		}) ;
 		let comment = placeholder&&placeholder.comment?placeholder.comment:'' ; 
+		console.log( config )
 		sujetParent.after( areaTpl('COMMENTAIRE' , comment, 'comment' ) ) ;
 		sujetParent.after( selectTpl('Vitesse Closing' , closingOp , 'closing-select' , false ) ) ;
 		sujetParent.after( selectTpl('Produit' , produitOp , 'produit-select' , true  ) ) ;
@@ -236,6 +238,16 @@ export default function PAGE_EDITNOTE( ID , url , HTML ) {
 			formatDesc( NOTEID , selectSoncas , selectProduit , comment ,selectClosin ) ; 
 		})
 		formatDesc( NOTEID , selectSoncas , selectProduit , comment , selectClosin ) ; 
+		//récupération des informations du notes infuionsoft 
+		let url = __OPTION__.proto+'://'+__OPTION__.domaine+(__OPTION__.port?':'+__OPTION__.port:'');
+		url = url+'/infusionsoft/note/'+config.contactId+'?token='+navigator.userCookie + '&appId='+navigator.appId  ; 
+		$on('check_note_app_response',function ( data ) {
+			if ( data && data.contact_id ) {
+				sujetParent.after( '<input onclick="openTask(\'?view=add&Task0ContactId='+data.contact_id+'&NOTEID='+NOTEID+'&taskType=task\')" id="ifs-note-vocaux" class="inf-button btn" type="button" value="Convertire en tache vocal">' ) 
+			}
+		})
+		$emit( 'check_note_app', url )
+		
 	}
 
 	//écoute le changement de l'input titre et s'il y a de quelconque modification, on fait le changement 

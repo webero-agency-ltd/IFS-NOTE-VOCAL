@@ -23,7 +23,7 @@ export function editnote() {
 export function trellodom() {
     //selection du boutton qui permet d'ajouter des notes dans ifs
     return {
-      btnAddNote : $('.js-plugin-sections') ,  
+      btnAddNote : $('.card-detail-data') ,  
       //actionType : $('#actionType') , 
       title : $('.js-card-detail-title-input') , 
       //noteSave : $('#noteSave') , 

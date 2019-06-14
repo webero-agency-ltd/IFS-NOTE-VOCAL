@@ -149,51 +149,53 @@ export class Vocale {
 
     static
     init( content ) {
-        let tpl = `<div id="recorder-info" style="display: none;">
-            <div style="display: flex;">
-                <div id="logo-recorded" class="recorder-style active "></div>
-                <input id="counter-recorded" style="width: 100px; margin-left: 6px;" disabled="disabled" name="timer" type="text" value="00 : 00" />
+        let tpl = `<div>
+            <div id="recorder-info" style="display: none;">
+                <div style="display: flex;">
+                    <div id="logo-recorded" class="recorder-style active "></div>
+                    <input id="counter-recorded" style="width: 100px; margin-left: 6px;" disabled="disabled" name="timer" type="text" value="00 : 00" />
+                </div>
             </div>
-        </div>
-        <div id="controls" style="display:flex;">
-            <button class="btn btn-recorder" id="recordButton">
-                <i style="display:none; vertical-align: middle; " class="spinner_vocal" id="recordButtonLoader"></i>
-                Record
-            </button>
-            <!--<button id="pauseButton" disabled>Pause</button>-->
-            <button class="btn btn-recorder" id="stopButton" disabled>Stop</button>
-            <!--<button id="deleteButton" disabled>Effacer</button>-->
-            <button class="btn btn-recorder" id="uploadButton">Télécharger</button>
-            <input style="position: absolute; top: -30000px; left: -30000px;" type="file" id="audio-upload" name="avatar" accept="audio/*">
-        </div>
-        <style>
-            .btn-recorder{
-                color: #191919 !important;
-                background-color: #b3d1e0 !important;
-                border-color: #191919 !important;
-            }
-            .spinner_vocal {
-                border-radius: 50%;
-                border-top: 2px solid rgba(48,48,64,.2);
-                border-right: 2px solid rgba(48,48,64,.2);
-                border-bottom: 2px solid rgba(48,48,64,.2);
-                border-left: 2px solid #4a5358;
-                display: inline-block;
-                width: 10px;
-                height: 10px;
-                transform: translateZ(0);
-                -webkit-transform: translateZ(0);
-                animation: spin 1s infinite linear;
-                -webkit-animation: spin 1s infinite linear;
-            }
-            .btn-recorder:disabled {
-                color: #404040 !important;
-                background-color: #e7e8e8 !important;
-                border-color: #b7b7b7 !important;
-            }
-        </style>
-        <div id="recordingsList"></div>
-        <div id="loaderUploadVocalNote" style="display:none;" ><div style="display:inline-block;" class="spinner_vocal"></div>... UPLOAD</div>`;
+            <div id="controls" style="display:flex;">
+                <button class="btn btn-recorder" id="recordButton">
+                    <i style="display:none; vertical-align: middle; " class="spinner_vocal" id="recordButtonLoader"></i>
+                    Record
+                </button>
+                <!--<button id="pauseButton" disabled>Pause</button>-->
+                <button class="btn btn-recorder" id="stopButton" disabled>Stop</button>
+                <!--<button id="deleteButton" disabled>Effacer</button>-->
+                <button class="btn btn-recorder" id="uploadButton">Télécharger</button>
+                <input style="position: absolute; top: -30000px; left: -30000px;" type="file" id="audio-upload" name="avatar" accept="audio/*">
+            </div>
+            <style>
+                .btn-recorder{
+                    color: #191919 !important;
+                    background-color: #b3d1e0 !important;
+                    border-color: #191919 !important;
+                }
+                .spinner_vocal {
+                    border-radius: 50%;
+                    border-top: 2px solid rgba(48,48,64,.2);
+                    border-right: 2px solid rgba(48,48,64,.2);
+                    border-bottom: 2px solid rgba(48,48,64,.2);
+                    border-left: 2px solid #4a5358;
+                    display: inline-block;
+                    width: 10px;
+                    height: 10px;
+                    transform: translateZ(0);
+                    -webkit-transform: translateZ(0);
+                    animation: spin 1s infinite linear;
+                    -webkit-animation: spin 1s infinite linear;
+                }
+                .btn-recorder:disabled {
+                    color: #404040 !important;
+                    background-color: #e7e8e8 !important;
+                    border-color: #b7b7b7 !important;
+                }
+            </style>
+            <div id="recordingsList"></div>
+            <div id="loaderUploadVocalNote" style="display:none;" ><div style="display:inline-block;" class="spinner_vocal"></div>... UPLOAD</div>
+        </div>`;
         let c = document.getElementById( content ) ;
         content.before( tpl ) 
         return

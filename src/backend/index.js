@@ -62,9 +62,16 @@ function emit(e,d,_tab) {
     );
 }
 
-chrome.runtime.onMessage.addListener(function (msg, sender, response) {
+chrome.runtime.onMessage.addListener(async function (msg, sender, response) {
     if( msg.name == 'upload' ){
         onupload = msg.data ; 
+    } else if( msg.name == 'check_note_app' ){
+        let check = await fetch( msg.data ) ;
+        if ( check.ok ) { 
+            let { data } = await check.json() 
+            emit('check_note_app_response', data ,'all') 
+        } 
+
     }  else if ( msg.name == 'cookies' ) {
         let url = __OPTION__.proto+'://'+__OPTION__.domaine+(__OPTION__.port?':'+__OPTION__.port:''); 
         console.log( url )

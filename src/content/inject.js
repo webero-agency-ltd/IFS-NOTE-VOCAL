@@ -60,6 +60,10 @@ $on('audio-recoreder-init',function ( { cookie , application } ) {
 				let ID = '' ; 
 				let html = '' ; 
 				let url = '' ; 
+				let location = window.location ;  
+				let _url_ = new URL( location ); 
+				let NOTEID = _url_.searchParams.get("NOTEID");
+
 				if ( !firstLoad ) {
 					let text = $('#Task0CreationNotes').text().trim() ; 
 					if ( text.indexOf('NOTEID::') >= 0 ) {
@@ -75,6 +79,9 @@ $on('audio-recoreder-init',function ( { cookie , application } ) {
 						let url = __OPTION__.proto+'://'+__OPTION__.domaine+(__OPTION__.port?':'+__OPTION__.port:'');
 						url = url+'/audio/'+ID ; 
 						//ici on check qu'on a bien un notes dans l'update 
+					}
+					if( NOTEID ){
+						ID = NOTEID
 					}
 					PAGE_EDITTASK( ID , url , text.replace(new RegExp(/NOTEID::(.*)::NOTEID/,'gi'), '').trim() ) 
 					firstLoad = true ; 
