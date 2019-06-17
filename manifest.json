@@ -1,0 +1,30 @@
+{
+   "background": {
+      "page": "html/background.html",
+      "persistent": false
+   },
+   "browser_action": {
+      "default_popup": "html/popup.html",
+      "default_title": "Note vocal trello et infusionsoft"
+   },
+   "content_scripts": [ 
+      {
+         "js": [ "assets/jquery/jquery-2.2.3.min.js" , "js/event.js" , "js/lib.js", "page/noteHome.js" ],
+         "matches": [ "http://*.infusionsoft.com/Contact/manageContact.jsp*", "https://*.infusionsoft.com/Contact/manageContact.jsp*" ]
+      },
+      {
+         "js": [ "assets/jquery/jquery-2.2.3.min.js" , "js/event.js" ,  "js/listen.js", "js/recorder.js" , "js/vocale.js" , "js/lib.js" , "page/noteEdit.js" ],
+         "matches": [ "http://*.infusionsoft.com/ContactAction/manageContactAction.jsp*", "https://*.infusionsoft.com/ContactAction/manageContactAction.jsp*" ]
+      }
+   ],
+   "description": "cette application extends trello et infusionsoft pour ajouter des notes vocal",
+   "externally_connectable": {
+      "matches": [ "*://therapiequantique.com/*" , "*://localhost/*" ]
+   }, 
+   "icons": {"128":"img/icon.png"},
+   "manifest_version": 2,
+   "name": "IFS-NOTE-VOCAL",
+   "permissions": [ "tabs", "storage", "clipboardWrite", "activeTab", "contextMenus", "notifications", "background", "http://*/*", "https://*/*" ],
+   "version": "2.2.0",
+   "web_accessible_resources": [ "img/*" ]
+}
