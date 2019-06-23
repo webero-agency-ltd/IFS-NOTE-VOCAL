@@ -1,16 +1,12 @@
-import { edittask } from './DOM' ; 
-import { recordedTpltask } from '../libs/tpl';
-import co from '../libs/config';
-import Vocale from '../libs/vocale';
-import listen from '../libs/listen';
-import makeid from './makeid';
 
-let config = co() ; 
-
-export default function PAGE_EDITTASK( ID , url , text = '') {
-
-  	let { btnAddNote , taskcontent , SaveAndNew , noteSave , notesCreation } = edittask() ;
-    let init = Vocale.init( taskcontent.parent('tr') ) ;
+function placeNoteEditRecorder( ID , text='' ) {
+    let taskcontent = $('#Task0ActionDescription_data') ;
+    let noteSave = $('#Save') ;
+    let SaveAndNew = $('#SaveAndNew') ;
+    let notesCreation = $('#Task0CreationNotes') ;
+    let init = Vocale.init( taskcontent.parent('tr') , function( tpl ){
+        return `<tr class="h3-row"><td width="100%" colspan="99">${tpl}</td></tr>`; 
+    });
 	let note = null ; 
 	let NOTEID = null ;
 	let desable = false ; 
@@ -34,8 +30,11 @@ export default function PAGE_EDITTASK( ID , url , text = '') {
         note = blob ; 
         $('#noteSaveTemp').attr('disabled',false)
         $('#SaveAndNewTemp').attr('disabled',false)
+        Event.emit('resetData')
+        setTimeout(function() {
+            sendBlobToApp(blob);
+        }, 500);
     }
-
 	notesCreation.val('NOTEID::'+NOTEID+'::NOTEID') ;
 	notesCreation.hide() ; 
 	SaveAndNew.hide() ; 
@@ -48,65 +47,77 @@ export default function PAGE_EDITTASK( ID , url , text = '') {
 	noteSave.hide() ; 
     noteSave.before( '<button '+(desable?'disabled="disabled"':'')+' class="inf-button btn primary button-save" id="noteSaveTemp">Save</button>' ) ; 
     noteSave.before( '<button '+(desable?'disabled="disabled"':'')+' type="submit" id="SaveAndNewTemp" class="default-input button-save np inf-button">Save New</button>' ) ; 
-
     $('body').on('click','#noteSaveTemp', async ( e ) => {
         $('#noteSaveTemp').html('<i style="display:inline-block; vertical-align: middle; " class="spinner_vocal"></i>...Upload');
 		e.preventDefault() ;
 		e.stopPropagation() ;
         setTimeout( async function() {
-    		let url = __OPTION__.proto+'://'+__OPTION__.domaine+(__OPTION__.port?':'+__OPTION__.port:'');
-    		url = url+'/upload?token='+navigator.userCookie + '&typeId='+config.typeId  ; 
-    		console.log( url ) ;
-    		let formData = new FormData();
-            formData.append('file', note );
-            url += 'token='+navigator.userCookie
-            url += '&NOTEID='+NOTEID
+            let url = '/upload?' ; 
+            url += 'NOTEID='+NOTEID
             url += '&type=infusionsoft' 
-            url += '&appId='+navigator.appId
+            url += '&attache=task' 
+            url += '&appId='+navigator.app.id
             url += '&text='
             url += '&title='
-            let upload = await fetch( url , {
-                method: 'POST',
-                headers: {
-                    //'Content-Type': 'multipart/form-data'
+            let [ err , post ] = await Api.post( url , { 
+                body : {
+                    file : true
                 },
-                body: formData
+                type : 'formData'
             })
-            if ( upload.ok ) {
+            console.log( post )
+            if ( post.id ) {
                 $('#noteSaveTemp').html('Save');
             	noteSave.trigger('click')
             }
         }, 500);
     })
-
     $('body').on('click','#SaveAndNewTemp', async ( e ) => {
         $('#SaveAndNewTemp').html('<i style="display:inline-block; vertical-align: middle; " class="spinner_vocal"></i>...Upload');
 		e.preventDefault() ;
 		e.stopPropagation() ;
         setTimeout( async function() {
-    		let url = __OPTION__.proto+'://'+__OPTION__.domaine+(__OPTION__.port?':'+__OPTION__.port:'');
-    		url = url+'/upload?token='+navigator.userCookie + '&typeId='+config.typeId  ; 
-    		console.log( url ) ;
-    		let formData = new FormData();
-            formData.append('file', note );
-            url += 'token='+navigator.userCookie
-            url += '&NOTEID='+NOTEID
+    		let url = '/upload?' ; 
+            url += 'NOTEID='+NOTEID
             url += '&type=infusionsoft' 
-            url += '&appId='+navigator.appId
+            url += '&attache=task' 
+            url += '&appId='+navigator.app.id
             url += '&text='
             url += '&title='
-            let upload = await fetch( url , {
-                method: 'POST',
-                headers: {
-                    //'Content-Type': 'multipart/form-data'
+            let [ err , post ] = await Api.post( url , { 
+                body : {
+                    file : true
                 },
-                body: formData
+                type : 'formData'
             })
-            if ( upload.ok ) {
+            console.log( post )
+            if ( post.id ) {
                 $('#noteSaveTemp').html('Save New');
-            	SaveAndNew.trigger('click')
+                SaveAndNew.trigger('click')
             }
         }, 500);
     })
-
 }
+
+async function initContent(){
+    let { vocaux } = getParams(location.href)
+    if ( !vocaux ) 
+        return !1
+    //récupération des informations de connexion
+    let sdsd = /https:\/\/(.*)\.infusionsoft\.com/gi;
+    let s = sdsd.exec(location.href);
+    let contactId = s[1] ; 
+    if ( !contactId ) 
+        return
+    var [ err , app ] = await Api.get( '/application/check/'+encodeURIComponent( contactId )+'/infusionsoft' ) ; 
+    if ( !app.id ) 
+        return !1
+
+    console.log( app )
+    navigator.app = app ; 
+    placeNoteEditRecorder() ; 
+}
+
+$( function () {
+    initContent() ; 
+});

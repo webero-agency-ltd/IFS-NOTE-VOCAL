@@ -1,34 +1,5 @@
-async function placeFormulaire( ID , url , HTML ) {
-
-  	let btnAddNote = $('#template').parents('.fieldContainer') ; 
-    let actionType = $('#actionType') ; 
-    let sujet = $('#subject') ; 
-    let noteSave = $('#noteSave') ; 
-
-	let init = Vocale.init( btnAddNote ) ;
-	let note = null ; 
-	let NOTEID = null ;
-	if ( !ID ) {
-		NOTEID = makeid( 16 ) ; 
-	} else{
-		NOTEID = ID ; 
-		setTimeout(function() {
-			let base = __OPTION__.proto+'://'+__OPTION__.domaine+(__OPTION__.port?':'+__OPTION__.port:'');
-        	new listen( 'recordingsList' , base+'/audio/'+ID , 'audio-liste-note-record' )
-        }, 1000);
-	}
-    let vo = new Vocale()
-    //enregistrement terminer
-    vo.recorder = function ( blob  ) {
-    	console.log( blob )
-        var url = URL.createObjectURL(blob);
-        new listen( 'recordingsList' , url , 'audio-liste-note-record' )
-        note = blob ; 
-        $('#noteSaveTemp').attr('disabled',false)
-    	sendBlobToApp(blob);
-    }
-    return
-    console.log( btnAddNote )
+function placeNoteEditForm(){
+	console.log( btnAddNote )
   	//Ajout du template d'enregistrement dans infusionsoft
     //btnAddNote.before( recordedTpl(obrecod.recorder()) ) ; 
 	//initialisation du DOM de l'application 
@@ -141,8 +112,43 @@ async function placeFormulaire( ID , url , HTML ) {
 			sujet.val( dataTitle[index] )
 		}
 	})
+}
+
+function placeNoteEditRecorder( ID , url , HTML ) {
+
+  	let btnAddNote = $('#template').parents('.fieldContainer') ; 
+    let actionType = $('#actionType') ; 
+    let sujet = $('#subject') ; 
+    let noteSave = $('#noteSave') ; 
+	let init = Vocale.init( btnAddNote ) ;
+	let note = null ; 
+	let NOTEID = null ;
+	if ( !ID ) {
+		NOTEID = makeid( 16 ) ; 
+	} else{
+		NOTEID = ID ; 
+		setTimeout(function() {
+			let base = __OPTION__.proto+'://'+__OPTION__.domaine+(__OPTION__.port?':'+__OPTION__.port:'');
+        	new listen( 'recordingsList' , base+'/audio/'+ID , 'audio-liste-note-record' )
+        }, 1000);
+	}
+    let vo = new Vocale()
+    //enregistrement terminer
+    vo.recorder = function ( blob  ) {
+        var url = URL.createObjectURL(blob);
+        new listen( 'recordingsList' , url , 'audio-liste-note-record' )
+        note = blob ; 
+        $('#noteSaveTemp').attr('disabled',false)
+        Event.emit('resetData')
+    	setTimeout(function() {
+    		sendBlobToApp(blob);
+    	}, 500);
+    }
 
 	noteSave.hide() ; 
+	//@todo : changer cette varraible si on fait la modification des notes 
+	let desable = true ; 
+
 	//on clique sur l'enregistrement de note 
     noteSave.before( '<button '+(desable?'disabled="disabled"':'')+' class="inf-button btn primary button-save" id="noteSaveTemp">Save</button>' ) ; 
 	
@@ -150,36 +156,38 @@ async function placeFormulaire( ID , url , HTML ) {
         $('#noteSaveTemp').html('<i style="display:inline-block; vertical-align: middle; " class="spinner_vocal"></i>...Upload');
 		e.preventDefault() ;
 		e.stopPropagation() ;
+	    vo.upload()
 		setTimeout( async function() {
-			let url = __OPTION__.proto+'://'+__OPTION__.domaine+(__OPTION__.port?':'+__OPTION__.port:'');
-			url = url+'/upload?token='+navigator.userCookie + '&typeId='+config.typeId  ; 
-			let formData = new FormData();
-	        formData.append('file', note );
-	        url += 'token='+navigator.userCookie
-	        url += '&NOTEID='+NOTEID
+			let url = '/upload?' ; 
+	        url += 'NOTEID='+NOTEID
 	        url += '&type=infusionsoft' 
-	        url += '&appId='+navigator.appId
-	        url += '&text='+generaleNote
-	        url += '&title='+generaleTitle
-	        vo.upload()
-	        let upload = await fetch( url , {
-	            method: 'POST',
-	            headers: {
-	                //'Content-Type': 'multipart/form-data'
-	            },
-	            body: formData
-	        })
-	        if ( upload.ok ) {
-	        	vo.stopUpload()
+	        url += '&appId='+navigator.app.id
+	        url += '&attache=note' 
+	        url += '&text='+'generaleNote'
+	        url += '&title='+'generaleTitle'
+			let [ err , post ] = await Api.post( url , { 
+				body : {
+					file : true
+				},
+				type : 'formData'
+			})
+	        //url += '&text='+generaleNote
+	        //url += '&title='+generaleTitle
+	        vo.stopUpload()
+	        console.log( post )
+	        if ( post.id ) {
 	        	$('#noteSaveTemp').html('Save');
 	        	noteSave.trigger('click')
-	        }
+			}
 		}, 500);
     })
 
 }
 
 async function initContent(){
+	let { vocaux } = getParams(location.href)
+	if ( !vocaux ) 
+		return !1
 	//récupération des informations de connexion
     let sdsd = /https:\/\/(.*)\.infusionsoft\.com/gi;
 	let s = sdsd.exec(location.href);
@@ -187,12 +195,10 @@ async function initContent(){
 	if ( !contactId ) 
 		return
 	var [ err , app ] = await Api.get( '/application/check/'+encodeURIComponent( contactId )+'/infusionsoft' ) ; 
-	console.log( err , app )
 	if ( ! app.id ) 
-		return
-	console.log( app ) ; 
-	placeFormulaire() ; 
-
+		return !1
+	navigator.app = app ; 
+	placeNoteEditRecorder() ; 
 }
 
 $( function () {

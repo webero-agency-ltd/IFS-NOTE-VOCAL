@@ -41,8 +41,27 @@ function emit(e,d,_tab) {
 }
 
 Event.on('requestApi',async function( data ){
-    let { url } = data ; 
-    let uploadResponse = await fetch( url )
+    let { url , method , headers , body , type } = data ; 
+    let uploadResponse = null ;
+    if ( method ) {
+        let formData = new FormData();
+        if ( type == 'formData' ) {
+            let keys = Object.keys( body )
+            for (var i = 0; i < keys.length; i++) {
+                if ( keys[i] == 'file' ) {
+                    formData.append('file', file );
+                }else{
+                    formData.append(keys[i], body[keys[i]] );
+                }
+            }
+            body = formData ; 
+        }else{
+            body = JSON.stringify( body )
+        }
+        uploadResponse = await fetch( url , { method , headers , body } )
+    }else{
+        uploadResponse = await fetch( url )
+    }
     if ( uploadResponse.ok ) { 
         let json = null ; 
         try {
@@ -58,9 +77,15 @@ Event.on('requestApi',async function( data ){
     return emit( 'reponseApi' , response ,'all' )
 })
 
-
 var _chunkIndex = 0 ; 
 var _blobs = [] ; 
+var file = null ; 
+
+Event.on('resetData',async function( request ){
+    file = null;
+    _chunkIndex = 0 ; 
+    _blobs = [] ; 
+})
 
 Event.on('sendData',async function( request ){
     if (request.blobAsText) {                  
@@ -70,7 +95,6 @@ Event.on('sendData',async function( request ){
             bytes[i] = request.blobAsText.charCodeAt(i);            
         }         
         _blobs[_chunkIndex-1] = new Blob([bytes], {type: request.mimeString});           
-
         if (_chunkIndex == request.chunks) {                      
             for (j=0; j<_blobs.length; j++) {
                 var mergedBlob;
@@ -80,8 +104,9 @@ Event.on('sendData',async function( request ){
                 else {                  
                    mergedBlob = new Blob([_blobs[j]], {type: request.mimeString});
                 }
-            }                         
-            console.log( mergedBlob )
+            }           
+            file = mergedBlob ; 
+            emit( 'sendDataOk' , null )
         }
     }
 })

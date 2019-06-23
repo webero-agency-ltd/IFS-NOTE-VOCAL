@@ -32,7 +32,8 @@ jQuery.createEventCapturing = (function () {
 class listen {
 
     constructor( content , url , id ) {
-        let c = document.getElementById( content ) ; 
+        let c = null ;
+        typeof( content ) == 'object'?c=content:c=document.getElementById(content)
         if ( c ) {
             //var au = document.createElement('audio');
             //au.controls = true;

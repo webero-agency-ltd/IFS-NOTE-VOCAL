@@ -145,7 +145,7 @@ class Vocale {
     }
 
     static
-    init( content ) {
+    init( content , template ) {
         let tpl = `<div>
             <div id="recorder-info" style="display: none;">
                 <div style="display: flex;">
@@ -194,7 +194,7 @@ class Vocale {
             <div id="loaderUploadVocalNote" style="display:none;" ><div style="display:inline-block;" class="spinner_vocal"></div>... UPLOAD</div>
         </div>`;
         let c = document.getElementById( content ) ;
-        content.before( tpl ) 
+        template?content.before( template( tpl ) ):content.before( tpl );
         return
     }
 }

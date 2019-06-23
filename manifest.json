@@ -9,12 +9,20 @@
    },
    "content_scripts": [ 
       {
-         "js": [ "assets/jquery/jquery-2.2.3.min.js" , "js/event.js" , "js/lib.js", "page/noteHome.js" ],
+         "js": [ "assets/jquery/jquery-2.2.3.min.js" , "js/event.js" ,  "js/listen.js", "js/lib.js", "page/noteHome.js" ],
          "matches": [ "http://*.infusionsoft.com/Contact/manageContact.jsp*", "https://*.infusionsoft.com/Contact/manageContact.jsp*" ]
+      },
+      {
+         "js": [ "assets/jquery/jquery-2.2.3.min.js" , "js/event.js" ,  "js/listen.js", "js/recorder.js" , "js/vocale.js" , "js/lib.js", "page/taskEdit.js" ],
+         "matches": [ "http://*.infusionsoft.com/Task/manageTask.jsp*", "https://*.infusionsoft.com/Task/manageTask.jsp*" ]
       },
       {
          "js": [ "assets/jquery/jquery-2.2.3.min.js" , "js/event.js" ,  "js/listen.js", "js/recorder.js" , "js/vocale.js" , "js/lib.js" , "page/noteEdit.js" ],
          "matches": [ "http://*.infusionsoft.com/ContactAction/manageContactAction.jsp*", "https://*.infusionsoft.com/ContactAction/manageContactAction.jsp*" ]
+      },
+      {
+         "js": [ "assets/jquery/jquery-2.2.3.min.js" , "js/event.js" ,  "js/listen.js", "js/recorder.js" , "js/vocale.js" , "js/lib.js" , "page/trello.js" ],
+         "matches": [ "http://trello.com/*", "https://trello.com/*" ]
       }
    ],
    "description": "cette application extends trello et infusionsoft pour ajouter des notes vocal",

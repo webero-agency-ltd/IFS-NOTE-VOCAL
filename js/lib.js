@@ -1,7 +1,6 @@
-var Auth , Icon , Dom  , Json , wait , makeid , loadeNoteListe , Note , sendBlobToApp ; 
+var Auth , Icon , Dom  , Json , wait , makeid , loadeNoteListe , Note , sendBlobToApp , getParams , extractUrlValue , lecteurTpl ; 
 
 Auth = {
-	
     checkApiKey: function (cbl) {
         this.getApiKey(function (res) {
             if (res !== '') {
@@ -87,7 +86,6 @@ Api = {
 	domaine : "localhost" , 
 	//domaine : "therapiequantique.net" , 
     get: async function ( entpoint , cbl ) {
-    	let i8 = 10000;
     	return new Promise((resolve, reject) => {
 		    Auth.getApiKey( async function (apiKey) {
 	            if (typeof apiKey != 'undefined' && apiKey !== '') {
@@ -105,6 +103,36 @@ Api = {
 	                })
 	                Event.emit('requestApi', {
 	                	url : urlCall , 
+	                })
+	            } else {
+				    cbl?cbl( [ false , false ] ):""
+				    return resolve( [ false , false ] )
+	            }
+	        });
+		});
+    },
+    post( entpoint , { body , method = 'POST' , headers = {} , type = false } , cbl ){
+    	return new Promise((resolve, reject) => {
+		    Auth.getApiKey( async function (apiKey) {
+	            if (typeof apiKey != 'undefined' && apiKey !== '') {
+	            	if (entpoint.indexOf("?") == '-1') {
+	                    urlCall = Api.url + entpoint + "?apiKey=" + apiKey;    
+	                } else {
+	                    urlCall = Api.url + entpoint + "&apiKey=" + apiKey;    
+	                }
+	                //lancement de l'évenement de requestio
+	                //dans le backend pour éliminer 
+	                //l'érreur de l'origine croiser  
+	                Event.on('reponseApi', async function( uploadResponse ){
+	                	cbl?cbl( uploadResponse ):""
+					    return resolve( uploadResponse )
+	                })
+	                Event.emit('requestApi', {
+	                	url : urlCall , 
+	                	body , 
+	                	method , 
+	                	headers , 
+	                	type , 
 	                })
 	            } else {
 				    cbl?cbl( [ false , false ] ):""
@@ -148,7 +176,7 @@ Dom = {
 	  		callback() ; 
 	  	} else {
 	  		setTimeout(function() {
-	  			readydom( select , callback , iframe ) 
+	  			Dom.watch( select , callback , iframe ) 
 	  		},500);
 	  	}
 	}
@@ -262,18 +290,14 @@ loadeNoteListe = async function (length) {
 
 
 sendBlobToApp = function ( blob ) {  
-
+	console.log( blob )
   	var CHUNK_SIZE = 256 * 1024;
- 	 var start = 0;
+ 	var start = 0;
   	var stop = CHUNK_SIZE;      
-
   	var remainder = blob.size % CHUNK_SIZE;
   	var chunks = Math.floor(blob.size / CHUNK_SIZE);      
-
   	var chunkIndex = 0;
-
   	if (remainder != 0) chunks = chunks + 1;           
-
   	var fr = new FileReader();
   	fr.onload = function() {
       	var message = {
@@ -281,9 +305,7 @@ sendBlobToApp = function ( blob ) {
         	mimeString: 'audio/wav',                 
         	chunks: chunks 
       	};          
-      	console.log( message )
       	Event.emit('sendData' , message )
-      	// read the next chunk of bytes
       	processChunk();
   	};
   	fr.onerror = function() { appendLog("An error ocurred while reading file"); };
@@ -291,24 +313,64 @@ sendBlobToApp = function ( blob ) {
 
   	function processChunk() {
      	chunkIndex++;         
-
-     	// exit if there are no more chunks
      	if (chunkIndex > chunks) {
         	return;
      	}
-
      	if (chunkIndex == chunks && remainder != 0) {
         	stop = start + remainder;
      	}                           
-
      	var blobChunk = blob.slice(start, stop);
-
-     	// prepare for next chunk
      	start = stop;
      	stop = stop + CHUNK_SIZE;
-
-     	// convert chunk as binary string
      	fr.readAsBinaryString(blobChunk);
   	} 
 }
 
+getParams = function (url) {
+	var params = {};
+	var parser = document.createElement('a');
+	parser.href = url;
+	var query = parser.search.substring(1);
+	var vars = query.split('&');
+	for (var i = 0; i < vars.length; i++) {
+		var pair = vars[i].split('=');
+		params[pair[0]] = decodeURIComponent(pair[1]);
+	}
+	return params;
+};
+
+extractUrlValue = function ( key, url )
+{
+    if (typeof(url) === 'undefined')
+        url = window.location.href;
+    var match = url.match('[?&]' + key + '=([^&]+)');
+    return match ? match[1] : null;
+}
+
+lecteurTpl = function ( url , id = "" ) {
+
+	return  `<div class="${id}core" class="audio-controller" >
+		<audio data-id="${id}" id="${id}" style="height: 30px;" controls="" >
+			<source  src="${url}"  type="audio/mpeg">
+		</audio>
+		<div class="${id}" style="padding-left: 21px; display:none ; height: 30px;" >
+			<a data-id="${id}" data-value="1" class="active speed-fan" href="#"><span>x 1</span></a>
+			<a data-id="${id}" data-value="1.25" class="speed-fan" href="#"><span>x 1.25</span></a>
+			<a data-id="${id}" data-value="1.50" class="speed-fan" href="#"><span>x 1.50</span></a>
+			<a data-id="${id}" data-value="2" class="speed-fan" href="#"><span>x 2</span></a>
+		</div>
+		<style>
+			a.speed-fan{
+				color : #b5b5b5 ; 
+				display: inline-block;
+			    vertical-align: top;
+			    margin-left: 0.51rem;
+			    margin-right: 0.51rem;
+			}
+			a.speed-fan.active{
+				color : #121212 ; 
+			}
+		</style>
+	</div>` ; 
+
+}
