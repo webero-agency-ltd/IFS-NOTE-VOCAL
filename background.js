@@ -1,4 +1,5 @@
 chrome.runtime.onMessageExternal.addListener(function ( data ) {
+    console.log( data )
     if (data["setApiKey"]) {
         key = data["setApiKey"];
         Auth.setApiKey(key);
