@@ -27,7 +27,7 @@
    ],
    "description": "cette application extends trello et infusionsoft pour ajouter des notes vocal",
    "externally_connectable": {
-      "matches": [ "*://therapiequantique.com/*" , "*://localhost/*" ]
+      "matches": [ "*://therapiequantique.net/*" , "*://localhost/*" ]
    }, 
    "icons": {"128":"img/icon.png"},
    "manifest_version": 2,

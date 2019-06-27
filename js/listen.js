@@ -72,6 +72,8 @@ class listen {
             let id = el.data('id') ; 
             let elCtrl = $('.'+id) ;
             elCtrl.show() ; 
+
+            console.log( 'PLAY LISTEN ' )
         })
         
         $('body').on('pause', 'audio', function(){
@@ -84,7 +86,7 @@ class listen {
     }
 
     init( id , url ) {
-
+        let thas = this ; 
         let tpl = `<div class="${id}core"  class="audio-controller" >
             <audio data-id="${id}" id="${id}" style="width: 100%; margin-top: 20px;" controls="" >
                 <source  src="${url}"  type="audio/mpeg">

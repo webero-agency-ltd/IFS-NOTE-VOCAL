@@ -59,6 +59,7 @@ Event.on('requestApi',async function( data ){
         }else{
             body = JSON.stringify( body )
         }
+        console.log( body )
         uploadResponse = await fetch( url , { method , headers , body } )
     }else{
         uploadResponse = await fetch( url )
@@ -70,12 +71,14 @@ Event.on('requestApi',async function( data ){
         } catch(e) {
             return emit( 'reponseApi' , [ { message : 'FORMAT ERROR' }, null]  ,'all' )
         }
+        console.log( '--- RESPONSE CALL' , url , method )
+        console.log( json )
         if ( json && json.type == 'ERROR' ) {
             return emit( 'reponseApi' ,[ json , null ] ,'all' );
         }
         return emit( 'reponseApi' ,[ null, json.data ]  ,'all') ; 
     }
-    return emit( 'reponseApi' , response ,'all' )
+    return emit( 'reponseApi' , [ true, null ] ,'all' )
 })
 
 var _chunkIndex = 0 ; 

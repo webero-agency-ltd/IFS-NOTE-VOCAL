@@ -165,6 +165,12 @@ class Vocale {
                 <input style="position: absolute; top: -30000px; left: -30000px;" type="file" id="audio-upload" name="avatar" accept="audio/*">
             </div>
             <style>
+                .recorder-style{
+                    width: 26px;
+                    height: 26px;
+                    background-color: #ff3434;
+                    border-radius: 26px;
+                }
                 .btn-recorder{
                     color: #191919 !important;
                     background-color: #b3d1e0 !important;

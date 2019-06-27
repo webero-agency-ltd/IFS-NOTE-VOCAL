@@ -1,6 +1,6 @@
-function selectTpl( title ,option , id = "" , multiple = false ) {
 
-	return  `<div class="fieldContainer fieldContainerMargin">
+function selectTpl( title ,option , id = "" , multiple = false ) {
+	return  `<div id="content_${id}" class="fieldContainer fieldContainerMargin">
 	    <div class="fieldLabel fieldLabelVerticalAlignTop">
 	        <label class="action-label" for="${id}">${title}</label></div>
 	    <div class="fieldControl">
@@ -9,160 +9,243 @@ function selectTpl( title ,option , id = "" , multiple = false ) {
 	        </select>
 	    </div>
 	</div>` ; 
-
 }
 
 function areaTpl( title ,value , id = "" ) {
-
-	return  `<div class="fieldContainer fieldContainerMargin">
+	return  `<div id="content_${id}" class="fieldContainer fieldContainerMargin">
 	    <div class="fieldLabel fieldLabelVerticalAlignTop">
 	        <label class="action-label-area" for="${id}">${title}</label></div>
 	    <div class="fieldControl">
 	        <textarea id="${id}" class="fieldControlWidth fieldControlTextInputHeight clearable" name="${id}">${value}</textarea>
 	    </div>
 	</div>` ; 
-
 }
 
-function dinamicForulaire(){
-	//écoute le changement de l'un de ces element pour faire le formatage du text dans infusionnote description
-	$('body').on('input','#comment',function ( e ) {
-		//si on ajoute ou éfface une commentaire 
-		comment = $(this).val() ; 
-		formatDesc( NOTEID , selectSoncas , selectProduit , comment ,selectClosin ) ; 
-	})
-	$('body').on('input','#produit-select',function ( e ) {
-		//si on select ou désélect un produit 
-		selectProduit  = $(this).val() ; 
-		formatDesc( NOTEID , selectSoncas , selectProduit , comment ,selectClosin ) ; 
-	})
-	$('body').on('input','#soncas-select',function ( e ) {
-		//si on select ou désélect un soncas 
-		selectSoncas  = $(this).val() ; 
-		formatDesc( NOTEID , selectSoncas , selectProduit , comment ,selectClosin ) ; 
-	})
-	$('body').on('input','#closing-select',function ( e ) {
-		selectClosin = $(this).val() ; 
-		formatDesc( NOTEID , selectSoncas , selectProduit , comment ,selectClosin ) ; 
-	})
-	formatDesc( NOTEID , selectSoncas , selectProduit , comment , selectClosin ) ; 
-	//récupération des informations du notes infuionsoft 
-	let url = __OPTION__.proto+'://'+__OPTION__.domaine+(__OPTION__.port?':'+__OPTION__.port:'');
-	url = url+'/infusionsoft/note/'+config.contactId+'?token='+navigator.userCookie + '&appId='+navigator.appId  ; 
-	$on('check_note_app_response',function ( data ) {
-		if ( data && data.contact_id ) {
-			sujetParent.after( '<input onclick="openTask(\'?view=add&Task0ContactId='+data.contact_id+'&NOTEID='+NOTEID+'&taskType=task\')" id="ifs-note-vocaux" class="inf-button btn" type="button" value="Convertire en tache vocal">' ) 
+function inputTpl ( title ,value , id , placeholder = "" ) {
+	return  `<div id="content_${id}" class="fieldContainer fieldContainerMargin">
+	    <div class="fieldLabel fieldLabelVerticalAlignTop">
+	        <label class="action-label-area" for="${id}">${title}</label></div>
+	    <div class="fieldControl">
+	    	<input id="${id}" name="${id}" type="text" value="${value}" placeholder="${placeholder}" class="default" />
+	    </div>
+	</div>` ; 
+}
+
+
+function formateTitle(e){
+	let title = e.toUpperCase()+' '+$('#produit-select').val()+' - '+( $('#'+e).val() !== '_____' ? $('#'+e).val() : $('#'+e+'_autre').val() ); 
+  	$('#subject').val( title ) ;
+  	console.log( title ) 
+}
+
+function showable( def ){
+	let el = ['comptabilite' , 'sav' , 'commercial' , 'autre']
+	for( let e of el ){
+		if ( def==e ) {
+			$( '#content_'+e ).show()
+			if ( $( '#'+e ).val() =='_____' ) {
+				$( '#content_'+e+'_autre' ).show()
+			}else{
+				$( '#content_'+e+'_autre' ).hide()
+			}
+		}else{
+			$( '#content_'+e ).hide()
+			$( '#content_'+e+'_autre' ).hide()
 		}
-	})
-	$emit( 'check_note_app', url )
+	}
 }
 
-function formuExtenssionTemplate(){
+async function dinamicForulaire(){
+	//récupération de la valeur par défaut de forlulaire 
+	let def = 'comptabilite';
+	if ( navigator.note && navigator.note.id ) {
+		var [ err , app ] = await Api.get( '/form/'+navigator.note.id ) ;
+		for( let { NoteId , name , type , value } of app ) {
+			console.log( '__________________________' )
+			console.log( NoteId , name , type , value )
+			$('#'+name).val( value )
+			if ( name == "categorie-select" ) {
+				def = value ; 
+			}
+		}
+	}
+	//on cache tout d'abord les éléments inutilement de l'application
+	showable( def )
+	formateTitle( def ) ; 
+	//changement des catégorie a afficher 
+	$('body').on('input','#categorie-select',function ( e ) {
+		def = $(this).val() ; 
+		showable( def )
+		formateTitle( def ) ; 
+	})
+
+	$('body').on('input','#produit-select',function ( e ) {
+		showable( def )
+		formateTitle( def ) ; 
+	})
+
+	$('body').on('input','#commercial',function ( e ) {
+		showable( def )
+		formateTitle( def ) ; 
+	})
+
+	$('body').on('input','#sav',function ( e ) {
+		showable( def )
+		formateTitle( def ) ; 
+	})
+
+	$('body').on('input','#comptabilite',function ( e ) {
+		showable( def )
+		formateTitle( def ) ; 
+	})
+
+	$('body').on('input','#categorie-select',function ( e ) {
+		showable( def )
+		formateTitle( def ) ; 
+	})
+
+	$('body').on('input','#commercial_autre',function ( e ) {
+		showable( def )
+		formateTitle( def ) ; 
+	})
+
+	$('body').on('input','#sav_autre',function ( e ) {
+		showable( def )
+		formateTitle( def ) ; 
+	})
+
+	$('body').on('input','#comptabilite_autre',function ( e ) {
+		showable( def )
+		formateTitle( def ) ; 
+	})
+
+}
+
+function formuExtenssionTemplate( NOTEID ){
 
 	var btnAddNote = $('#template').parents('.fieldContainer') ; 
   	var actionType = $('#actionType') ; 
   	var sujet = $('#subject') ; 
   	var noteSave = $('#noteSave') ;
-
+  	var notes = $('#notes') ;
   	console.log( btnAddNote )
-
 	//ici on fait la modification des valeurs boutton 
 	actionType.html('<option>Message Vocal</option>') 
-	
 	//ajoute du liste de titre du note pour facilité la selection 
 	if ( !sujet.length ) 
 		return !1;
-
-	//changer le style du titre 
-	sujet.css({ position: 'absolute' , top: '-6000px', left: '-10000px' })
 	//ajoute desu autre différent input de selection 
 	let sujetParent  = sujet.parents('.fieldContainer') ; 
-	
+	let notesParent  = notes.parents('.fieldContainer') ; 
+	//changer le style du titre 
+	sujetParent.css({ position: 'absolute' , top: '-6000px', left: '-10000px' })
+	notesParent.css({ position: 'absolute' , top: '-6000px', left: '-10000px' })
+	//ajoute du valeur par défaut dans la descriptions du notes 
+	notes.val( Api.url+'/note/u/'+NOTEID ) ; 
 	if ( sujetParent ) {
-
-		//on ajoute la liste d'option des titres 
-		let categorie = `<option selected="selected" value="0">COMPTABILITE</option>
-				<option value="1">SAV</option>
-				<option value="3">COMMERCIAL</option>
-				<option value="4">AUTRE</option>`;
-		//sujet.val( 'Résumé après appel commercial Aumscan 4' )
-		//change style pour le cacher 
-		sujetParent.after( selectTpl('Catégorie ' , categorie , 'categorie-select' , true ) ) ;
-
-		//formulaire de Produit 
-		let produit = `<option selected="selected" value="0">Aumscan 4</option>
-			<option value="1">Aumscan 3</option>
-			<option value="3">Cardiaum</option>
-			<option value="4">TQ2022</option>
-			<option value="5">Coloraum</option>`
-		sujetParent.after( selectTpl('Produit :' , produit , 'produit-select' , false ) ) ;
-
-		//formulaire de Comptabilité 
-		let comptabilite = `<option selected="selected" value="0">Envoyer document</option>
-			<option value="1">Vérifier paiement</option>
-			<option value="2">Gérer impayé</option>
-			<option value="3">Autre (Input Texte libre)</option>`
-		sujetParent.after( selectTpl('Comptabilité :' , comptabilite , 'produit-select' , false ) ) ;
-
-		//formulaire de sav 
-		let sav = `<option selected="selected" value="0">Installation logiciel</option>
-			<option value="1">Intervention</option>
-			<option value="2">Autre (Input Texte libre)</option>`
-		sujetParent.after( selectTpl('SAV :' , sav , 'produit-select' , false ) ) ;
-
-		//formulaire de sav 
-		let commercial = `<option selected="selected" value="0">Envoyer devis</option>
-			<option value="1">Relancer</option>
-			<option value="2">Closer</option>
-			<option value="3">Résumé après appel</option>
-			<option value="4">Résumé après présentation</option>
-			<option value="5">Envoyer document</option>
-			<option value="6">Autre (Input Texte libre)</option>`
-		sujetParent.after( selectTpl('Commercial :' , commercial , 'produit-select' , false ) ) ;
-
-		//formulaire de autre
-		let other = '' ; 
-		sujetParent.after( areaTpl('Autre :' , other, 'autre' ) ) ;
-
+		navigator.note&&navigator.note.id?sujetParent.after( '<input onclick="openTask(\'?view=add&Task0ContactId='+navigator.note.contact_id+'&NOTEID='+NOTEID+'&nativeId='+navigator.note.id+'&taskType=task\')" id="ifs-note-vocaux" class="inf-button btn" type="button" value="Convertire en tache vocal">' ):''
 		///////////////////////////////////////////////////////////////
 		//formulaire qui part dans la description a apartire d'ici 
 		/////////////////////////////////////////////////////////////
-		//formulaire de sav 
-		let soncas = `<option selected="selected" value="0">Sécurité</option>
-			<option value="1">Orgueil</option>
-			<option value="2">Nouveauté</option>
-			<option value="3">Confort</option>
-			<option value="4">Argent</option>
-			<option value="5">Sympathie</option>`
-		sujetParent.after( selectTpl('SONCAS :' , soncas , 'soncas-select' , false ) ) ;
-
-		let vitesseclosing = `<option selected="selected" value="0">V1 (Rapide)</option>
-			<option value="1">V2 (Moyen)</option>
-			<option value="2">V3 (Lent)</option>`
-		sujetParent.after( selectTpl('Vitesse Closing :' , vitesseclosing , 'soncas-select' , false ) ) ;
-
 		//formulaire de autre
 		let dm = '' ; 
-		sujetParent.after( areaTpl('Douleur émotionnelle :' , dm, 'autre' ) ) ;
-
+		sujetParent.after( areaTpl('Douleur émotionnelle :' , dm, 'doemotion' ) ) ;
 		let comment = '' ; 
-		sujetParent.after( areaTpl('Commentaire :' , comment, 'autre' ) ) ;
-
+		sujetParent.after( areaTpl('Commentaire :' , comment, 'comment' ) ) ;
+		//formulaire de sav 
+		let soncasArray = [
+			{value : 0 , key : 'Sécurité'} , 
+			{value : 1 , key : 'Orgueil'} , 
+			{value : 2 , key : 'Nouveauté'} , 
+			{value : 3 , key : 'Confort'} , 
+			{value : 4 , key : 'Argent'} , 
+			{value : 5 , key : 'Sympathie'} , 
+		] ; 
+		let soncas = soncasArray.map(({ value , key })=>{
+			return `<option value="${value}">${key}</option>`;
+		}) 
+		sujetParent.after( selectTpl('SONCAS :' , soncas , 'soncas-select' , false ) ) ;
+		let vitesseclosingArray = [
+			{value : 0 , key : 'V1 (Rapide)'} , 
+			{value : 1 , key : 'V2 (Moyen)'} , 
+			{value : 2 , key : 'V3 (Lent)'} , 
+		] ; 
+		let vitesseclosing = vitesseclosingArray.map(({ value , key })=>{
+			return `<option value="${value}">${key}</option>`;
+		}) 
+		sujetParent.after( selectTpl('Vitesse Closing :' , vitesseclosing , 'vitesse-closing-select' , false ) ) ;		
+		//formulaire de Produit 
+		let produitArray = [
+			{value : 'Aumscan 4' , key : 'Aumscan 4'} , 
+			{value : 'Aumscan 3' , key : 'Aumscan 3'} , 
+			{value : 'Cardiaum' , key : 'Cardiaum'} , 
+			{value : 'TQ2022' , key : 'TQ2022'} , 
+			{value : 'Coloraum' , key : 'Coloraum'} , 
+		] ; 
+		let produit = produitArray.map(({ value , key })=>{
+			return `<option value="${value}">${key}</option>`;
+		}) 
+		sujetParent.after( selectTpl('Produit :' , produit , 'produit-select' , false ) ) ;
+		//formulaire de autre
+		let other = '' ; 
+		sujetParent.after( areaTpl('Autre :' , other, 'autre' ) ) ;
+		//formulaire de sav
+		let commercialArray = [
+			{value : 'Envoyer devis' , key : 'Envoyer devis'} , 
+			{value : 'Relancer' , key : 'Relancer'} , 
+			{value : 'Closer' , key : 'Closer'} , 
+			{value : 'Résumé après appel' , key : 'Résumé après appel'} , 
+			{value : 'Résumé après présentation' , key : 'Résumé après présentation'} , 
+			{value : 'Envoyer document' , key : 'Envoyer document'} , 
+			{value : '_____' , key : 'Autre (Input Texte libre)'} , 
+		] ; 
+		let commercial = commercialArray.map(({ value , key })=>{
+			return `<option value="${value}">${key}</option>`;
+		})  
+		sujetParent.after( inputTpl( '' , '', 'commercial_autre' , 'Text commercial') ) ;
+		sujetParent.after( selectTpl('Commercial :' , commercial , 'commercial' , false ) ) ;
+		//formulaire de sav 
+		let savArray = [
+			{value : 'Installation logiciel' , key : 'Installation logiciel'} , 
+			{value : 'Intervention' , key : 'Intervention'} , 
+			{value : '_____' , key : 'Autre (Input Texte libre)'} , 
+		] ; 
+		let sav = savArray.map(({ value , key })=>{
+			return `<option value="${value}">${key}</option>`;
+		})
+		sujetParent.after( inputTpl( '' , '', 'sav_autre' , 'Text sav') ) ;
+		sujetParent.after( selectTpl('SAV :' , sav , 'sav' , false ) ) ;
+		//formulaire de Comptabilité 
+		let comptabiliteArray = [
+			{value : 'Envoyer document' , key : 'Envoyer document'} , 
+			{value : 'Vérifier paiement' , key : 'Vérifier paiement'} , 
+			{value : 'Gérer impayé' , key : 'Gérer impayé'} , 
+			{value : '_____' , key : 'Autre (Input Texte libre)'} , 
+		] ; 
+		let comptabilite = comptabiliteArray.map(({ value , key })=>{
+			return `<option value="${value}">${key}</option>`;
+		})
+		sujetParent.after( inputTpl( '' , '', 'comptabilite_autre' , 'Text comptabilite' ) ) ;
+		sujetParent.after( selectTpl('Comptabilité :' , comptabilite , 'comptabilite' , false ) ) ;
+		//on ajoute la liste d'option des titres 
+		let categorieArray = [
+			{value : 'comptabilite' , key : 'COMPTABILITE'} , 
+			{value : 'sav' , key : 'SAV'} , 
+			{value : 'commercial' , key : 'COMMERCIAL'} , 
+			{value : 'autre' , key : 'AUTRE'} , 
+		] ; 
+		let categorie = categorieArray.map(({ value , key })=>{
+			return `<option value="${value}">${key}</option>`;
+		})
+		//sujet.val( 'Résumé après appel commercial Aumscan 4' )
+		//change style pour le cacher 
+		sujetParent.after( selectTpl('Catégorie ' , categorie , 'categorie-select' , false ) ) ;
+		dinamicForulaire() ; 
 	}
-
-	//écoute le changement de l'input titre et s'il y a de quelconque modification, on fait le changement 
-	//de l'input d'origine 
-	$('body').on('change','#subject-title',function ( e ) {
-		var index = $(this).val() ; 
-		if ( dataTitle[index] ) {
-			generaleTitle = dataTitle[index];
-			sujet.val( dataTitle[index] )
-		}
-	})
 
 }
 
-function placeNoteEditRecorder() {
+function placeNoteEditRecorder( ID ) {
 
   	let btnAddNote = $('#template').parents('.fieldContainer') ; 
     let actionType = $('#actionType') ; 
@@ -170,20 +253,26 @@ function placeNoteEditRecorder() {
     let noteSave = $('#noteSave') ; 
 	let init = Vocale.init( btnAddNote ) ;
 	let note = null ; 
+	let desable = true ; 
 	let NOTEID = null ;
-	let ID = null ;
+  	listen.event()
 	//@todo: Récupération des notes, s'il n'est pas dans la base de donner ou s'il y a l'ID de 
 	//ce note dans la base de donner 
 	if ( !ID ) {
 		NOTEID = makeid( 16 ) ; 
 	} else{
-		NOTEID = ID ; 
-		setTimeout(function() {
-			let base = __OPTION__.proto+'://'+__OPTION__.domaine+(__OPTION__.port?':'+__OPTION__.port:'');
-        	new listen( 'recordingsList' , base+'/audio/'+ID , 'audio-liste-note-record' )
+		desable = false;
+		NOTEID = navigator.note.unique ; 
+		setTimeout(async function() {
+			let [ err , post ] = await Api.get( '/note/nativeId/'+ID )
+			if( post.unique ){
+        		new listen( 'recordingsList' , Api.url+'/audio/'+post.unique , 'audio-liste-note-record' )
+			}
         }, 1000);
 	}
+	console.log( NOTEID )
     let vo = new Vocale()
+    let file = false ; 
     //enregistrement terminer
     vo.recorder = function ( blob  ) {
         var url = URL.createObjectURL(blob);
@@ -193,16 +282,12 @@ function placeNoteEditRecorder() {
         Event.emit('resetData')
     	setTimeout(function() {
     		sendBlobToApp(blob);
+    		file = true ; 
     	}, 500);
     }
-
 	noteSave.hide() ; 
-	//@todo : changer cette varraible si on fait la modification des notes 
-	let desable = true ; 
-
 	//on clique sur l'enregistrement de note 
     noteSave.before( '<button '+(desable?'disabled="disabled"':'')+' class="inf-button btn primary button-save" id="noteSaveTemp">Save</button>' ) ; 
-	
 	$('body').on('click','#noteSaveTemp', async ( e ) => {
         $('#noteSaveTemp').html('<i style="display:inline-block; vertical-align: middle; " class="spinner_vocal"></i>...Upload');
 		e.preventDefault() ;
@@ -214,32 +299,81 @@ function placeNoteEditRecorder() {
 	        url += '&type=infusionsoft' 
 	        url += '&appId='+navigator.app.id
 	        url += '&attache=note' 
-	        url += '&text='+'generaleNote'
-	        url += '&title='+'generaleTitle'
+	        url += '&text='+''
+	        url += '&title='+''
+	        if ( ID ) {
+	        	console.log( ID )
+	        	url += '&update='+true
+	        }
+	        if ( file ) {
+	        	url += '&file='+true
+	        }else{
+	        	url += '&file='+false
+	        }
+	        console.log('START PLOAD' , url )
 			let [ err , post ] = await Api.post( url , { 
 				body : {
-					file : true
+					file : true , 
 				},
 				type : 'formData'
 			})
 	        //url += '&text='+generaleNote
 	        //url += '&title='+generaleTitle
 	        vo.stopUpload()
+	        let urlForm = '/form/'+post.id ; 
+	        console.log( 'Upload a formulaire' , urlForm )
+	        let body = [] ; 
+	        let doemotion = $('#doemotion').val()
+	        body = [ ...body , { type : 'text' , name : 'doemotion' , value : doemotion } ]
+			let autre = $('#autre').val()
+	        body = [ ...body , { type : 'text' , name : 'autre' , value : autre } ]
+			let comment = $('#comment').val()
+	        body = [ ...body , { type : 'text' , name : 'comment' , value : comment } ]
+			let vitesse_closing_select = $('#vitesse-closing-select').val()
+	        body = [ ...body , { type : 'text' , name : 'vitesse-closing-select' , value : vitesse_closing_select } ]
+			let soncas_select = $('#soncas-select').val()
+	        body = [ ...body , { type : 'text' , name : 'soncas-select' , value : soncas_select } ]
+			let produit_select = $('#produit-select').val()
+	        body = [ ...body , { type : 'text' , name : 'produit-select' , value : produit_select } ]
+			let commercial_autre = $('#commercial_autre').val()
+	        body = [ ...body , { type : 'text' , name : 'commercial_autre' , value : commercial_autre } ]
+			let commercial = $('#commercial').val()
+	        body = [ ...body , { type : 'text' , name : 'commercial' , value : commercial } ]
+			let sav_autre = $('#sav_autre').val()
+	        body = [ ...body , { type : 'text' , name : 'sav_autre' , value : sav_autre } ]
+			let sav = $('#sav').val()
+	        body = [ ...body , { type : 'text' , name : 'sav' , value : sav } ]
+			let comptabilite_autre = $('#comptabilite_autre').val()
+	        body = [ ...body , { type : 'text' , name : 'comptabilite_autre' , value : comptabilite_autre } ]
+			let comptabilite = $('#comptabilite').val()
+	        body = [ ...body , { type : 'text' , name : 'comptabilite' , value : comptabilite } ]
+			let categorie_select = $('#categorie-select').val()
+	        body = [ ...body , { type : 'text' , name : 'categorie-select' , value : categorie_select } ]
+			let [ error , form ] = await Api.post( urlForm , { 
+				body : { data : body } , 
+				headers: {
+		            'Accept': 'application/json',
+		            'Content-Type': 'application/json'
+		        },
+			})
+	        console.log( body )
+	        console.log( form )
+	        console.log( error )
 	        console.log( post )
+	        /////////////////// 
 	        if ( post.id ) {
 	        	$('#noteSaveTemp').html('Save');
 	        	noteSave.trigger('click')
 			}
 		}, 500);
     })
-
-    formuExtenssionTemplate()
+    formuExtenssionTemplate( NOTEID )
 
 }
 
 async function initContent(){
-	let { vocaux } = getParams(location.href)
-	if ( !vocaux ) 
+	let { vocaux , ID } = getParams(location.href)
+	if ( !vocaux && !ID ) 
 		return !1
 	//récupération des informations de connexion
     let sdsd = /https:\/\/(.*)\.infusionsoft\.com/gi;
@@ -250,8 +384,20 @@ async function initContent(){
 	var [ err , app ] = await Api.get( '/application/check/'+encodeURIComponent( contactId )+'/infusionsoft' ) ; 
 	if ( ! app.id ) 
 		return !1
-	navigator.app = app ; 
-	placeNoteEditRecorder() ; 
+	navigator.app = app ;
+	//récupération des valeurs des notes par défaut dans notre application 
+	if ( ID ) {
+		var [ err , note ] = await Api.get( '/note/nativeId/'+ ID ) ; 
+		navigator.note = note ;
+		if ( (!navigator.note || (navigator.note && !navigator.note.id)) && !vocaux ) {
+			return !1
+		}
+		var [ err , native ] = await Api.get( '/infusionsoft/note/'+ID + '/?appId='+navigator.app.id) ; 
+		if ( ! native.contact_id ) 
+			return !1
+		navigator.note['contact_id'] = native ['contact_id'] ; 
+	}
+	placeNoteEditRecorder( ID ) ; 
 }
 
 $( function () {

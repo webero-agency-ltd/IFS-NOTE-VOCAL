@@ -32,6 +32,8 @@ function loadVocale( notes ) {
 	var noteListe = $('.noteSubjectText') ; 
   	console.log( notes ) ; 
   	console.log( noteListe ) ; 
+
+  	listen.event()
 	noteListe.each(async function ( index , e ) {
 		let link = $( e ).find('a') ; 
 		let href = null 
@@ -41,8 +43,10 @@ function loadVocale( notes ) {
 			ID = extractUrlValue( 'ID' , href )
 		}
 		let note = notes.filter( e => e.nativeId==ID||e.nativeId == ID+"" ? true : false ) ; 
+		let content = $(e).parent('.noteColumn').find('.noteContentText')
+		let precontent = content.text() ;
+		console.log( precontent )
 		if ( ID && note.length ) {
-			let content = $(e).parent('.noteColumn').find('.noteContentText')
 			if ( content.length ) {
 				let url = Api.url+'/audio/'+note[0].unique ; 
         		new listen( content[0] , url , 'audio-liste-note-'+index )
@@ -51,6 +55,22 @@ function loadVocale( notes ) {
 					<div class="content-note-vocaux">${html}</div>` ) ;*/
 			}
 			//ceci est un note vocale 
+		}else if ( precontent.indexOf('https://therapiequantique.net/note/u/') >= 0 ) {
+			let repl = precontent.replace(new RegExp('\r?\n','g'), ''); ; 
+			let sdsd = /https:\/\/therapiequantique.net\/note\/u\/(.*)/gi;
+			let s = sdsd.exec(repl);
+			if ( s[1] ) {
+				console.log( 'update note ici' )  ;
+				console.log( s[1] , ID )
+				//récupération des informations de cette note ci pour voire si c'est 
+				//un note vocal ou pas. si c'est est une, on récupère les information via 
+				var [ error , upnote ] = await Api.get( `/infusionsoft/setnote/${s[1]}/${ID}` )
+				if ( upnote && upnote.id ) {
+					let url = Api.url+'/audio/'+s[1] ; 
+					var [ err , app ] = await Api.get( '/form/'+navigator.note.id ) ;
+        			new listen( content[0] , url , 'audio-liste-note-'+upnote.id )
+				}
+			}
 		}
 	})
 }

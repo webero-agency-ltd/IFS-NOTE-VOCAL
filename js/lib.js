@@ -79,8 +79,8 @@ Json = {
 }
 
 Api = {
-	url : "http://localhost:3000" , 
-	//url : "https://therapiequantique.net" , 
+	//url : "http://localhost:3000" , 
+	url : "https://therapiequantique.net" , 
 	port : "3000" , 
 	//port : "" , 
 	domaine : "localhost" , 
