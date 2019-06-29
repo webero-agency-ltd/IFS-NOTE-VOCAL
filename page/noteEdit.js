@@ -1,3 +1,4 @@
+let nativeId = null ; 
 
 function selectTpl( title ,option , id = "" , multiple = false ) {
 	return  `<div id="content_${id}" class="fieldContainer fieldContainerMargin">
@@ -62,11 +63,14 @@ async function dinamicForulaire(){
 		var [ err , app ] = await Api.get( '/form/'+navigator.note.id ) ;
 		for( let { NoteId , name , type , value } of app ) {
 			console.log( '__________________________' )
-			console.log( NoteId , name , type , value )
-			$('#'+name).val( value )
 			if ( name == "categorie-select" ) {
 				def = value ; 
+			}else if ( name == "vitesse-closing-select" && value ) {
+				value = value.split(',') 
 			}
+			console.log( NoteId , name , type , value )
+			$('#'+name).val( value )
+
 		}
 	}
 	//on cache tout d'abord les éléments inutilement de l'application
@@ -143,7 +147,7 @@ function formuExtenssionTemplate( NOTEID ){
 	//ajoute du valeur par défaut dans la descriptions du notes 
 	notes.val( Api.url+'/note/u/'+NOTEID ) ; 
 	if ( sujetParent ) {
-		navigator.note&&navigator.note.id?sujetParent.after( '<input onclick="openTask(\'?view=add&Task0ContactId='+navigator.note.contact_id+'&NOTEID='+NOTEID+'&nativeId='+navigator.note.id+'&taskType=task\')" id="ifs-note-vocaux" class="inf-button btn" type="button" value="Convertire en tache vocal">' ):''
+		navigator.note&&navigator.note.id?sujetParent.after( '<input onclick="openTask(\'?view=add&Task0ContactId='+navigator.note.contact_id+'&NOTEID='+NOTEID+'&nativeId='+nativeId+'&taskType=task\')" id="ifs-note-vocaux" class="inf-button btn" type="button" value="Convertire en tache vocal">' ):''
 		///////////////////////////////////////////////////////////////
 		//formulaire qui part dans la description a apartire d'ici 
 		/////////////////////////////////////////////////////////////
@@ -153,35 +157,19 @@ function formuExtenssionTemplate( NOTEID ){
 		let comment = '' ; 
 		sujetParent.after( areaTpl('Commentaire :' , comment, 'comment' ) ) ;
 		//formulaire de sav 
-		let soncasArray = [
-			{value : 0 , key : 'Sécurité'} , 
-			{value : 1 , key : 'Orgueil'} , 
-			{value : 2 , key : 'Nouveauté'} , 
-			{value : 3 , key : 'Confort'} , 
-			{value : 4 , key : 'Argent'} , 
-			{value : 5 , key : 'Sympathie'} , 
-		] ; 
+		let soncasArray = formPlace('soncasArray') ; 
 		let soncas = soncasArray.map(({ value , key })=>{
 			return `<option value="${value}">${key}</option>`;
 		}) 
 		sujetParent.after( selectTpl('SONCAS :' , soncas , 'soncas-select' , false ) ) ;
-		let vitesseclosingArray = [
-			{value : 0 , key : 'V1 (Rapide)'} , 
-			{value : 1 , key : 'V2 (Moyen)'} , 
-			{value : 2 , key : 'V3 (Lent)'} , 
-		] ; 
+
+		let vitesseclosingArray = formPlace('vitesseclosingArray') ; 
 		let vitesseclosing = vitesseclosingArray.map(({ value , key })=>{
 			return `<option value="${value}">${key}</option>`;
 		}) 
-		sujetParent.after( selectTpl('Vitesse Closing :' , vitesseclosing , 'vitesse-closing-select' , false ) ) ;		
+		sujetParent.after( selectTpl('Vitesse Closing :' , vitesseclosing , 'vitesse-closing-select' , true ) ) ;		
 		//formulaire de Produit 
-		let produitArray = [
-			{value : 'Aumscan 4' , key : 'Aumscan 4'} , 
-			{value : 'Aumscan 3' , key : 'Aumscan 3'} , 
-			{value : 'Cardiaum' , key : 'Cardiaum'} , 
-			{value : 'TQ2022' , key : 'TQ2022'} , 
-			{value : 'Coloraum' , key : 'Coloraum'} , 
-		] ; 
+		let produitArray = formPlace('produitArray') ; 
 		let produit = produitArray.map(({ value , key })=>{
 			return `<option value="${value}">${key}</option>`;
 		}) 
@@ -190,50 +178,28 @@ function formuExtenssionTemplate( NOTEID ){
 		let other = '' ; 
 		sujetParent.after( areaTpl('Autre :' , other, 'autre' ) ) ;
 		//formulaire de sav
-		let commercialArray = [
-			{value : 'Envoyer devis' , key : 'Envoyer devis'} , 
-			{value : 'Relancer' , key : 'Relancer'} , 
-			{value : 'Closer' , key : 'Closer'} , 
-			{value : 'Résumé après appel' , key : 'Résumé après appel'} , 
-			{value : 'Résumé après présentation' , key : 'Résumé après présentation'} , 
-			{value : 'Envoyer document' , key : 'Envoyer document'} , 
-			{value : '_____' , key : 'Autre (Input Texte libre)'} , 
-		] ; 
+		let commercialArray = formPlace('commercialArray') ; 
 		let commercial = commercialArray.map(({ value , key })=>{
 			return `<option value="${value}">${key}</option>`;
 		})  
 		sujetParent.after( inputTpl( '' , '', 'commercial_autre' , 'Text commercial') ) ;
 		sujetParent.after( selectTpl('Commercial :' , commercial , 'commercial' , false ) ) ;
-		//formulaire de sav 
-		let savArray = [
-			{value : 'Installation logiciel' , key : 'Installation logiciel'} , 
-			{value : 'Intervention' , key : 'Intervention'} , 
-			{value : '_____' , key : 'Autre (Input Texte libre)'} , 
-		] ; 
+		//formulaire de sav
+		let savArray = formPlace('savArray') ;   
 		let sav = savArray.map(({ value , key })=>{
 			return `<option value="${value}">${key}</option>`;
 		})
 		sujetParent.after( inputTpl( '' , '', 'sav_autre' , 'Text sav') ) ;
 		sujetParent.after( selectTpl('SAV :' , sav , 'sav' , false ) ) ;
 		//formulaire de Comptabilité 
-		let comptabiliteArray = [
-			{value : 'Envoyer document' , key : 'Envoyer document'} , 
-			{value : 'Vérifier paiement' , key : 'Vérifier paiement'} , 
-			{value : 'Gérer impayé' , key : 'Gérer impayé'} , 
-			{value : '_____' , key : 'Autre (Input Texte libre)'} , 
-		] ; 
+		let comptabiliteArray = formPlace('comptabiliteArray') ;   
 		let comptabilite = comptabiliteArray.map(({ value , key })=>{
 			return `<option value="${value}">${key}</option>`;
 		})
 		sujetParent.after( inputTpl( '' , '', 'comptabilite_autre' , 'Text comptabilite' ) ) ;
 		sujetParent.after( selectTpl('Comptabilité :' , comptabilite , 'comptabilite' , false ) ) ;
 		//on ajoute la liste d'option des titres 
-		let categorieArray = [
-			{value : 'comptabilite' , key : 'COMPTABILITE'} , 
-			{value : 'sav' , key : 'SAV'} , 
-			{value : 'commercial' , key : 'COMMERCIAL'} , 
-			{value : 'autre' , key : 'AUTRE'} , 
-		] ; 
+		let categorieArray = formPlace('categorieArray') ;
 		let categorie = categorieArray.map(({ value , key })=>{
 			return `<option value="${value}">${key}</option>`;
 		})
@@ -264,7 +230,7 @@ function placeNoteEditRecorder( ID ) {
 		desable = false;
 		NOTEID = navigator.note.unique ; 
 		setTimeout(async function() {
-			let [ err , post ] = await Api.get( '/note/nativeId/'+ID )
+			let [ err , post ] = await Api.get( '/note/nativeId/'+ID+'/note' )
 			if( post.unique ){
         		new listen( 'recordingsList' , Api.url+'/audio/'+post.unique , 'audio-liste-note-record' )
 			}
@@ -322,33 +288,7 @@ function placeNoteEditRecorder( ID ) {
 	        vo.stopUpload()
 	        let urlForm = '/form/'+post.id ; 
 	        console.log( 'Upload a formulaire' , urlForm )
-	        let body = [] ; 
-	        let doemotion = $('#doemotion').val()
-	        body = [ ...body , { type : 'text' , name : 'doemotion' , value : doemotion } ]
-			let autre = $('#autre').val()
-	        body = [ ...body , { type : 'text' , name : 'autre' , value : autre } ]
-			let comment = $('#comment').val()
-	        body = [ ...body , { type : 'text' , name : 'comment' , value : comment } ]
-			let vitesse_closing_select = $('#vitesse-closing-select').val()
-	        body = [ ...body , { type : 'text' , name : 'vitesse-closing-select' , value : vitesse_closing_select } ]
-			let soncas_select = $('#soncas-select').val()
-	        body = [ ...body , { type : 'text' , name : 'soncas-select' , value : soncas_select } ]
-			let produit_select = $('#produit-select').val()
-	        body = [ ...body , { type : 'text' , name : 'produit-select' , value : produit_select } ]
-			let commercial_autre = $('#commercial_autre').val()
-	        body = [ ...body , { type : 'text' , name : 'commercial_autre' , value : commercial_autre } ]
-			let commercial = $('#commercial').val()
-	        body = [ ...body , { type : 'text' , name : 'commercial' , value : commercial } ]
-			let sav_autre = $('#sav_autre').val()
-	        body = [ ...body , { type : 'text' , name : 'sav_autre' , value : sav_autre } ]
-			let sav = $('#sav').val()
-	        body = [ ...body , { type : 'text' , name : 'sav' , value : sav } ]
-			let comptabilite_autre = $('#comptabilite_autre').val()
-	        body = [ ...body , { type : 'text' , name : 'comptabilite_autre' , value : comptabilite_autre } ]
-			let comptabilite = $('#comptabilite').val()
-	        body = [ ...body , { type : 'text' , name : 'comptabilite' , value : comptabilite } ]
-			let categorie_select = $('#categorie-select').val()
-	        body = [ ...body , { type : 'text' , name : 'categorie-select' , value : categorie_select } ]
+	        let body = FormValueFormate() ; 
 			let [ error , form ] = await Api.post( urlForm , { 
 				body : { data : body } , 
 				headers: {
@@ -372,30 +312,39 @@ function placeNoteEditRecorder( ID ) {
 }
 
 async function initContent(){
+
+	console.log("111")
 	let { vocaux , ID } = getParams(location.href)
 	if ( !vocaux && !ID ) 
 		return !1
+	console.log("222")
 	//récupération des informations de connexion
     let sdsd = /https:\/\/(.*)\.infusionsoft\.com/gi;
 	let s = sdsd.exec(location.href);
 	let contactId = s[1] ; 
 	if ( !contactId ) 
 		return
+	console.log("333")
 	var [ err , app ] = await Api.get( '/application/check/'+encodeURIComponent( contactId )+'/infusionsoft' ) ; 
 	if ( ! app.id ) 
 		return !1
+	console.log("444")
 	navigator.app = app ;
 	//récupération des valeurs des notes par défaut dans notre application 
 	if ( ID ) {
-		var [ err , note ] = await Api.get( '/note/nativeId/'+ ID ) ; 
+		var [ err , note ] = await Api.get( '/note/nativeId/'+ID+'/note' ) ; 
 		navigator.note = note ;
+		console.log( navigator.note , (!navigator.note || (navigator.note && !navigator.note.id)) && !vocaux  , vocaux )
 		if ( (!navigator.note || (navigator.note && !navigator.note.id)) && !vocaux ) {
 			return !1
 		}
 		var [ err , native ] = await Api.get( '/infusionsoft/note/'+ID + '/?appId='+navigator.app.id) ; 
+		console.log( native )
 		if ( ! native.contact_id ) 
 			return !1
+		console.log("666")
 		navigator.note['contact_id'] = native ['contact_id'] ; 
+		nativeId = ID ;
 	}
 	placeNoteEditRecorder( ID ) ; 
 }

@@ -38,21 +38,31 @@ function loadVocale( notes ) {
 		let link = $( e ).find('a') ; 
 		let href = null 
 		let ID = null 
+		let type = "" ;
 		if ( link.length ) {
 			href = link[0].href
+			console.log( href )
+			if ( href.indexOf( 'javascript:openTask' ) !== -1 ) {
+				type = 'task';
+			}else if ( href.indexOf( 'javascript:openHistory' ) !== -1 ) {
+				type = 'note';
+			}
 			ID = extractUrlValue( 'ID' , href )
 		}
-		let note = notes.filter( e => e.nativeId==ID||e.nativeId == ID+"" ? true : false ) ; 
+		let note = notes.filter( e => (e.nativeId==ID||e.nativeId == ID+"")&&(type == e.attache)? true : false ) ; 
 		let content = $(e).parent('.noteColumn').find('.noteContentText')
-		let precontent = content.text() ;
-		console.log( precontent )
+		let precontent = content.text().trim() ;
+		console.log( note )
 		if ( ID && note.length ) {
 			if ( content.length ) {
 				let url = Api.url+'/audio/'+note[0].unique ; 
-        		new listen( content[0] , url , 'audio-liste-note-'+index )
-				/*$(content[0]).html( `<a target="_blank" href="${url}">${url}</a></br> 
-					${lecteurTpl( url , 'audio-liste-note-'+index )}
-					<div class="content-note-vocaux">${html}</div>` ) ;*/
+				console.log( '___API FIND RESPONSE' )
+				let [ err , form ] = await Api.get( '/form/'+note[0].id ) ;
+				console.log( form[2] , note[0].id , '/form/'+note[0].id )
+				console.log( '_____________________' )
+				let text = formateComment( form ) ; 
+				console.log( text )
+        		new listen( content[0] , url , 'audio-liste-note-'+index , '<div>'+text+'</div>' )
 			}
 			//ceci est un note vocale 
 		}else if ( precontent.indexOf('https://therapiequantique.net/note/u/') >= 0 ) {
@@ -64,11 +74,15 @@ function loadVocale( notes ) {
 				console.log( s[1] , ID )
 				//récupération des informations de cette note ci pour voire si c'est 
 				//un note vocal ou pas. si c'est est une, on récupère les information via 
-				var [ error , upnote ] = await Api.get( `/infusionsoft/setnote/${s[1]}/${ID}` )
+				console.log( `/infusionsoft/setnote/${s[1]}/${ID}/`+type )
+				var [ error , upnote ] = await Api.get( `/infusionsoft/setnote/${s[1]}/${ID}/`+type )
 				if ( upnote && upnote.id ) {
 					let url = Api.url+'/audio/'+s[1] ; 
-					var [ err , app ] = await Api.get( '/form/'+navigator.note.id ) ;
-        			new listen( content[0] , url , 'audio-liste-note-'+upnote.id )
+					//récupération des formulaires de cette notes 
+					var [ err , form ] = await Api.get( '/form/'+upnote.id ) ;
+					console.log( form )
+					let text = formateComment( form ) ; 
+        			new listen( content[0] , url , 'audio-liste-note-'+upnote.id , '<div>'+text+'</div>' )
 				}
 			}
 		}
@@ -83,11 +97,13 @@ async function initContent(){
 	if ( !contactId ) 
 		return
 	var [ err , app ] = await Api.get( '/application/check/'+encodeURIComponent( contactId )+'/infusionsoft' )
+	console.log( app )
 	if ( ! app.id ) 
 		return
 	placeButton() ; 
 	//récupération de tout les notes de cette infusionsoft 
-	var [ err , note ]  = await Api.get( '/notes/'+app.id ) ; 
+	var [ err , note ]  = await Api.get( '/notes/'+app.id ) ;
+	console.log( note , err ) 
 	loadVocale( note ) ; 
 }
 

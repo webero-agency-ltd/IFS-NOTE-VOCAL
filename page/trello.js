@@ -10,24 +10,26 @@ function placeNoteEditRecorder( note ) {
 	let pages = document.querySelector( 'body' ) ; 
 	let ready = false ; 
 
-	Event.on('sendDataOk',async function( request ){
+	Event.on('sendDataOk',function( request ){
 	    vo.upload()
-    	let url = '/upload?' ; 
-        url += 'NOTEID='+NOTEIDTEMP
-        url += '&type=infusionsoft' 
-        url += '&appId='+navigator.app.id
-        url += '&attache=note' 
-        url += '&text='+generaleNote
-        url += '&title='+generaleTitle
-		let [ err , post ] = await Api.post( url , { 
-			body : {
-				file : true
-			},
-			type : 'formData'
-		})
-        //url += '&text='+generaleNote
-        //url += '&title='+generaleTitle
-        vo.stopUpload()
+    	setTimeout(async function() {
+    		let url = '/upload?' ; 
+	        url += 'NOTEID='+NOTEIDTEMP
+	        url += '&type=trello' 
+	        url += '&appId='+navigator.app.id
+	        url += '&attache=card' 
+	        url += '&text='+generaleNote
+	        url += '&title='+generaleTitle
+			let [ err , post ] = await Api.post( url , { 
+				body : {
+					file : true
+				},
+				type : 'formData'
+			})
+	        //url += '&text='+generaleNote
+	        //url += '&title='+generaleTitle
+	        vo.stopUpload()
+    	}, 1000);
 	})
 
 	Dom.observeDOM( pages ,async function(e){
@@ -42,11 +44,15 @@ function placeNoteEditRecorder( note ) {
 			let url_ = new URL( location ); 
 			let NOTEID = decodeURIComponent(url_.pathname).split('/').join('_').replace('/', '_').normalize('NFD').replace(/[\u0300-\u036f]/g, "") 
 			console.log( '- ID : ' , NOTEID )
+
 			NOTEIDTEMP = NOTEID ;
 			//check si note existe dans le dom 
 			let init = Vocale.init( btnAddNote ) ;
-			console.log( '---------' , btnAddNote )
- 			
+ 			let [ err , note ] = await Api.get( '/note/'+NOTEID ) ; 
+ 			console.log( note , '/note/'+NOTEID )
+			if ( note && note.id ) {
+		        new listen( 'recordingsList' ,  Api.url+'/audio/'+NOTEID  , 'audio-liste-note-record' )
+			}
 			vo = new Vocale()
 		    //enregistrement terminer
 		    vo.recorder = function ( blob  ) {
@@ -60,6 +66,7 @@ function placeNoteEditRecorder( note ) {
 		    	}, 500);	
 		    }
 		    
+		    //button de conversion de card en tache infusionsoft 
 		    btnAddNote.before( `<div class="fieldContainer fieldContainerMargin">
 		    	<input class="inf-button btn button-x" id="duplicate_task" type="button" value="Clone en note infusionsoft">
 		    	<input class="inf-button btn button-x" id="copy_task" type="button" value="Copier en note infusionsoft">

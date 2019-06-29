@@ -42,7 +42,7 @@ function emit(e,d,_tab) {
 }
 
 Event.on('requestApi',async function( data ){
-    let { url , method , headers , body , type } = data ; 
+    let { url , method , headers , body , type , event } = data ; 
     let uploadResponse = null ;
     if ( method ) {
         let formData = new FormData();
@@ -69,16 +69,16 @@ Event.on('requestApi',async function( data ){
         try {
             json = await uploadResponse.json() ;
         } catch(e) {
-            return emit( 'reponseApi' , [ { message : 'FORMAT ERROR' }, null]  ,'all' )
+            return emit( event , [ { message : 'FORMAT ERROR' }, null]  ,'all' )
         }
-        console.log( '--- RESPONSE CALL' , url , method )
+        console.log( '--- RESPONSE CALL' , url , method , event )
         console.log( json )
         if ( json && json.type == 'ERROR' ) {
-            return emit( 'reponseApi' ,[ json , null ] ,'all' );
+            return emit( event ,[ json , null ] ,'all' );
         }
-        return emit( 'reponseApi' ,[ null, json.data ]  ,'all') ; 
+        return emit( event ,[ null, json.data ]  ,'all') ; 
     }
-    return emit( 'reponseApi' , [ true, null ] ,'all' )
+    return emit( event , [ true, null ] ,'all' )
 })
 
 var _chunkIndex = 0 ; 

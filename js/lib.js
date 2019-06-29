@@ -1,4 +1,4 @@
-var Auth , Icon , Dom  , Json , wait , makeid , loadeNoteListe , Note , sendBlobToApp , getParams , extractUrlValue , lecteurTpl ; 
+var bytesToSize , formateComment , formPlace , FormValueFormate , Auth , Icon , Dom  , Json , wait , makeid , loadeNoteListe , Note , sendBlobToApp , getParams , extractUrlValue , lecteurTpl ; 
 
 Auth = {
     checkApiKey: function (cbl) {
@@ -85,7 +85,7 @@ Api = {
 	//port : "" , 
 	domaine : "localhost" , 
 	//domaine : "therapiequantique.net" , 
-    get: async function ( entpoint , cbl ) {
+    get: function ( entpoint , cbl ) {
     	return new Promise((resolve, reject) => {
 		    Auth.getApiKey( async function (apiKey) {
 	            if (typeof apiKey != 'undefined' && apiKey !== '') {
@@ -97,12 +97,19 @@ Api = {
 	                //lancement de l'évenement de requestio
 	                //dans le backend pour éliminer 
 	                //l'érreur de l'origine croiser  
-	                Event.on('reponseApi', async function( uploadResponse ){
-	                	cbl?cbl( uploadResponse ):""
+	                var uniq = 'id' + (new Date()).getTime() + makeid(12) ;
+	                //console.log( uniq , '______________________++++++++++++++++')
+	                Event.on(uniq, async function( uploadResponse ){
+	                	cbl?cbl( uploadResponse ):"";
+	                	console.log( uploadResponse )
+	                	setTimeout(function() {
+	                		Event.delete( uniq )
+	                	}, 1000);
 					    return resolve( uploadResponse )
-	                })
+	                } , true )
 	                Event.emit('requestApi', {
 	                	url : urlCall , 
+	                	event : uniq ,
 	                })
 	            } else {
 				    cbl?cbl( [ false , false ] ):""
@@ -123,8 +130,13 @@ Api = {
 	                //lancement de l'évenement de requestio
 	                //dans le backend pour éliminer 
 	                //l'érreur de l'origine croiser  
-	                Event.on('reponseApi', async function( uploadResponse ){
+	                var uniq = 'id' + (new Date()).getTime() + makeid(12) ;
+	                Event.on( uniq , async function( uploadResponse ){
 	                	cbl?cbl( uploadResponse ):""
+	                	setTimeout(function() {
+	                		Event.delete( uniq )
+	                	}, 1000);
+	                	console.log( uploadResponse )
 					    return resolve( uploadResponse )
 	                })
 	                Event.emit('requestApi', {
@@ -133,6 +145,7 @@ Api = {
 	                	method , 
 	                	headers , 
 	                	type , 
+	                	event : uniq
 	                })
 	            } else {
 				    cbl?cbl( [ false , false ] ):""
@@ -374,3 +387,132 @@ lecteurTpl = function ( url , id = "" ) {
 	</div>` ; 
 
 }
+
+FormValueFormate = function(){
+	let body = [] ; 
+    let doemotion = $('#doemotion').val()
+    body = [ ...body , { type : 'text' , name : 'doemotion' , value : doemotion } ]
+	let autre = $('#autre').val()
+    body = [ ...body , { type : 'text' , name : 'autre' , value : autre } ]
+	let comment = $('#comment').val()
+    body = [ ...body , { type : 'text' , name : 'comment' , value : comment } ]
+	let vitesse_closing_select = $('#vitesse-closing-select').val()
+    body = [ ...body , { type : 'text' , name : 'vitesse-closing-select' , value : vitesse_closing_select?vitesse_closing_select.join():'' } ]
+	let soncas_select = $('#soncas-select').val()
+    body = [ ...body , { type : 'text' , name : 'soncas-select' , value : soncas_select } ]
+	let produit_select = $('#produit-select').val()
+    body = [ ...body , { type : 'text' , name : 'produit-select' , value : produit_select } ]
+	let commercial_autre = $('#commercial_autre').val()
+    body = [ ...body , { type : 'text' , name : 'commercial_autre' , value : commercial_autre } ]
+	let commercial = $('#commercial').val()
+    body = [ ...body , { type : 'text' , name : 'commercial' , value : commercial } ]
+	let sav_autre = $('#sav_autre').val()
+    body = [ ...body , { type : 'text' , name : 'sav_autre' , value : sav_autre } ]
+	let sav = $('#sav').val()
+    body = [ ...body , { type : 'text' , name : 'sav' , value : sav } ]
+	let comptabilite_autre = $('#comptabilite_autre').val()
+    body = [ ...body , { type : 'text' , name : 'comptabilite_autre' , value : comptabilite_autre } ]
+	let comptabilite = $('#comptabilite').val()
+    body = [ ...body , { type : 'text' , name : 'comptabilite' , value : comptabilite } ]
+	let categorie_select = $('#categorie-select').val()
+    body = [ ...body , { type : 'text' , name : 'categorie-select' , value : categorie_select } ]
+    return body 
+}
+
+formateComment = function( form ){
+	let text = '' ; 
+	for( let { name , value } of form ){
+		if ( name == 'soncas-select' && value !== '') {
+			let val = formPlace('soncasArray')  ;
+			text += '<strong>SONCAS :</strong> </br>'
+			for( let pitem of val ){
+				pitem.value==value?text += ` - ${pitem.key}</br>`:'';
+			}
+		}else if( name == 'vitesse-closing-select' && value ){
+			text += '<strong>Vitesse Closing :</strong> </br>';
+			console.log( value )
+			let ex = value.split(',') ; 
+			console.log( ex )
+			let val = formPlace('vitesseclosingArray')  ;
+			for( let i of ex ){
+				for( let pitem of val ){
+					pitem.value==i?text += ` - ${pitem.key}</br>`:'';
+				}
+			}
+		}else if( name == 'doemotion' && value !== ''){
+			text += '<strong>Douleur émotionnelle :</strong> </br>'
+			text += ` - ${value}</br>`
+		}else if( name == 'comment' && value !== ''){
+			text += '<strong>Commentaire :</strong></br>'
+			text += ` - ${value}</br>`
+		}
+	}
+	return text
+}
+
+formPlace = function( opt ){
+	
+	let objs = {} ; 
+	objs['soncasArray'] = [
+		{value : 0 , key : 'Sécurité'} , 
+		{value : 1 , key : 'Orgueil'} , 
+		{value : 2 , key : 'Nouveauté'} , 
+		{value : 3 , key : 'Confort'} , 
+		{value : 4 , key : 'Argent'} , 
+		{value : 5 , key : 'Sympathie'} , 
+	]; 
+	objs['vitesseclosingArray'] = [
+		{value : 0 , key : 'V1 (Rapide)'} , 
+		{value : 1 , key : 'V2 (Moyen)'} , 
+		{value : 2 , key : 'V3 (Lent)'} , 
+	]; 
+	objs['produitArray'] = [
+		{value : 'Aumscan 4' , key : 'Aumscan 4'} , 
+		{value : 'Aumscan 3' , key : 'Aumscan 3'} , 
+		{value : 'Cardiaum' , key : 'Cardiaum'} , 
+		{value : 'TQ2022' , key : 'TQ2022'} , 
+		{value : 'Coloraum' , key : 'Coloraum'} , 
+	] ; 
+
+	objs['commercialArray'] = [
+		{value : 'Envoyer devis' , key : 'Envoyer devis'} , 
+		{value : 'Relancer' , key : 'Relancer'} , 
+		{value : 'Closer' , key : 'Closer'} , 
+		{value : 'Résumé après appel' , key : 'Résumé après appel'} , 
+		{value : 'Résumé après présentation' , key : 'Résumé après présentation'} , 
+		{value : 'Envoyer document' , key : 'Envoyer document'} , 
+		{value : '_____' , key : 'Autre (Input Texte libre)'} , 
+	] ; 
+
+	objs['savArray'] = [
+		{value : 'Installation logiciel' , key : 'Installation logiciel'} , 
+		{value : 'Intervention' , key : 'Intervention'} , 
+		{value : '_____' , key : 'Autre (Input Texte libre)'} , 
+	]; 
+
+	objs['comptabiliteArray'] =  [
+		{value : 'Envoyer document' , key : 'Envoyer document'} , 
+		{value : 'Vérifier paiement' , key : 'Vérifier paiement'} , 
+		{value : 'Gérer impayé' , key : 'Gérer impayé'} , 
+		{value : '_____' , key : 'Autre (Input Texte libre)'} , 
+	];
+
+	objs['categorieArray'] =  [
+		{value : 'comptabilite' , key : 'COMPTABILITE'} , 
+		{value : 'sav' , key : 'SAV'} , 
+		{value : 'commercial' , key : 'COMMERCIAL'} , 
+		{value : 'autre' , key : 'AUTRE'} , 
+	]; 
+
+	if ( objs[opt] ) 
+		return objs[opt]
+	return null 
+
+}
+
+bytesToSize = function (bytes) {
+   var sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+   if (bytes == 0) return '0 Byte';
+   var i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
+   return Math.round(bytes / Math.pow(1024, i), 2) + ' ' + sizes[i];
+};

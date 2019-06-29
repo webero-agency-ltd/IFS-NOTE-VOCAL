@@ -43,7 +43,7 @@ var Recorder = exports.Recorder = (function () {
 
         this.config = {
             bufferLen: 4096,
-            numChannels: 2,
+            numChannels: 1,
             mimeType: 'audio/wav'
         };
         this.recording = false;
@@ -112,7 +112,102 @@ var Recorder = exports.Recorder = (function () {
                 recLength += inputBuffer[0].length;
             }
 
-            function exportWAV(type) {
+            var bytesToSize = function (bytes) {
+               var sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+               if (bytes == 0) return '0 Byte';
+               var i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
+               return Math.round(bytes / Math.pow(1024, i), 2) + ' ' + sizes[i];
+            };
+
+            function parseWav(wav) {
+                function readInt(i, bytes) {
+                    var ret = 0,
+                        shft = 0;
+
+                    while (bytes) {
+                        ret += wav[i] << shft;
+                        shft += 8;
+                        i++;
+                        bytes--;
+                    }
+                    return ret;
+                }
+                if (readInt(20, 2) != 1) throw 'Invalid compression code, not PCM';
+                if (readInt(22, 2) != 1) throw 'Invalid number of channels, not 1';
+                return {
+                    sampleRate: readInt(24, 4),
+                    bitsPerSample: readInt(34, 2),
+                    samples: wav.subarray(44)
+                };
+            }
+
+            var convert = function( result ){
+                var arrayBuffer = result;
+                var buffer = new Uint8Array(arrayBuffer);
+
+                data = parseWav(buffer);
+
+                var config = {
+                  mode : 3,
+                  channels:1,
+                  samplerate: data.sampleRate,
+                  bitrate: data.bitsPerSample
+                };
+
+                var mp3codec = Lame.init();
+                Lame.set_mode(mp3codec, config.mode || Lame.JOINT_STEREO);
+                Lame.set_num_channels(mp3codec, config.channels || 2);
+                Lame.set_num_samples(mp3codec, config.samples || -1);
+                Lame.set_in_samplerate(mp3codec, config.samplerate || 44100);
+                Lame.set_out_samplerate(mp3codec, config.samplerate || 44100);
+                Lame.set_bitrate(mp3codec, config.bitrate || 128);    
+                Lame.init_params(mp3codec);
+
+                var array = Uint8ArrayToFloat32Array(data.samples);
+
+                var mp3data = Lame.encode_buffer_ieee_float(mp3codec, array, array);
+
+                var url = 'data:audio/mp3;base64,'+encode64(mp3data.data);
+                convertedPlayer.src = url;
+                convertedLink.href = url;
+
+                var name = file.name.substr(0, file.name.lastIndexOf('.'));
+                convertedLink.textContent = name + '.mp3';
+
+                converted.style.display = 'block';
+
+                Lame.encode_flush(mp3codec);
+                Lame.close(mp3codec);
+                mp3codec = null;
+            };
+
+            function downsampleBuffer(buffer, rate) {
+                if (rate == sampleRate) {
+                    return buffer;
+                }
+                if (rate > sampleRate) {
+                    throw "downsampling rate show be smaller than original sample rate";
+                }
+                var sampleRateRatio = sampleRate / rate;
+                var newLength = Math.round(buffer.length / sampleRateRatio);
+                var result = new Float32Array(newLength);
+                var offsetResult = 0;
+                var offsetBuffer = 0;
+                while (offsetResult < result.length) {
+                    var nextOffsetBuffer = Math.round((offsetResult + 1) * sampleRateRatio);
+                    var accum = 0, count = 0;
+                    for (var i = offsetBuffer; i < nextOffsetBuffer && i < buffer.length; i++) {
+                        accum += buffer[i];
+                        count++;
+                    }
+                    result[offsetResult] = accum / count;
+                    offsetResult++;
+                    offsetBuffer = nextOffsetBuffer;
+                }
+                return result;
+            }
+
+            function exportWAV(type , rate = 16000 ) {
                 var buffers = [];
                 for (var channel = 0; channel < numChannels; channel++) {
                     buffers.push(mergeBuffers(recBuffers[channel], recLength));
@@ -123,9 +218,13 @@ var Recorder = exports.Recorder = (function () {
                 } else {
                     interleaved = buffers[0];
                 }
-                var dataview = encodeWAV(interleaved);
-                var audioBlob = new Blob([dataview], { type: type });
 
+
+                var downsampledBuffer = downsampleBuffer(interleaved, rate);
+                var dataview = encodeWAV(rate, downsampledBuffer, false);
+
+                var audioBlob = new Blob([dataview], { type: type });
+                console.log(  bytesToSize(audioBlob.size) )
                 self.postMessage({ command: 'exportWAV', data: audioBlob });
             }
 
@@ -187,7 +286,8 @@ var Recorder = exports.Recorder = (function () {
                 }
             }
 
-            function encodeWAV(samples) {
+            function encodeWAV( rate , samples) {
+                console.log( samples )
                 var buffer = new ArrayBuffer(44 + samples.length * 2);
                 var view = new DataView(buffer);
 
@@ -206,9 +306,9 @@ var Recorder = exports.Recorder = (function () {
                 /* channel count */
                 view.setUint16(22, numChannels, true);
                 /* sample rate */
-                view.setUint32(24, sampleRate, true);
+                view.setUint32(24, rate, true);
                 /* byte rate (sample rate * block align) */
-                view.setUint32(28, sampleRate * 4, true);
+                view.setUint32(28, rate * 4, true);
                 /* block align (channel count * bytes per sample) */
                 view.setUint16(32, numChannels * 2, true);
                 /* bits per sample */

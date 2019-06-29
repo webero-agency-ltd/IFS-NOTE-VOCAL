@@ -31,14 +31,14 @@ jQuery.createEventCapturing = (function () {
 
 class listen {
 
-    constructor( content , url , id ) {
+    constructor( content , url , id , html ) {
         let c = null ;
         typeof( content ) == 'object'?c=content:c=document.getElementById(content)
         if ( c ) {
             //var au = document.createElement('audio');
             //au.controls = true;
             //au.src = url;
-            let tpl = this.init( id , url ) ;
+            let tpl = this.init( id , url , html ) ;
             c.innerHTML=tpl ; 
             return true
         }
@@ -85,7 +85,8 @@ class listen {
         
     }
 
-    init( id , url ) {
+    init( id , url , html = '' ) {
+        console.log( html )
         let thas = this ; 
         let tpl = `<div class="${id}core"  class="audio-controller" >
             <audio data-id="${id}" id="${id}" style="width: 100%; margin-top: 20px;" controls="" >
@@ -109,7 +110,7 @@ class listen {
                     color : #121212 ; 
                 }
             </style>
-        </div>`;
+        </div>${html}`;
         return tpl ; 
 
     }

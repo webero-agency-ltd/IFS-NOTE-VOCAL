@@ -4,8 +4,11 @@
 let on = {} ;
 
 var Event = {
-    on: function ( event , func ) {
-        if (on[event]) {}
+    on: function ( event , func , onEvent ) {
+        if (on[event]) {
+        	console.log( onEvent ) ; 
+        	if ( onEvent ) return
+        }
 		else{
 			on[event] = [] ;
 		}
@@ -16,6 +19,11 @@ var Event = {
 		  	name:   event,
 		  	data:   option,
 		});
+    },
+    delete : function( event ){
+    	if (on[event]) {
+			delete on[event] ;
+		}
     }
 };
 
