@@ -55,6 +55,7 @@ function loadVocale( notes ) {
 		console.log( note )
 		if ( ID && note.length ) {
 			if ( content.length ) {
+
 				let url = Api.url+'/audio/'+note[0].unique ; 
 				console.log( '___API FIND RESPONSE' )
 				let [ err , form ] = await Api.get( '/form/'+note[0].id ) ;
@@ -62,12 +63,12 @@ function loadVocale( notes ) {
 				console.log( '_____________________' )
 				let text = formateComment( form ) ; 
 				console.log( text )
-        		new listen( content[0] , url , 'audio-liste-note-'+index , '<div>'+text+'</div>' )
+        		new listen( content[0] , url , 'audio-liste-note-'+index , '<div><a target="_blank"  href="https://therapiequantique.net/read/'+note[0].unique+'">https://therapiequantique.net/read/'+note[0].unique+'</a></div>'+'<div>'+text+'</div>' )
 			}
-			//ceci est un note vocale 
-		}else if ( precontent.indexOf('https://therapiequantique.net/note/u/') >= 0 ) {
+			//ceci est un note vocale  
+		}else if ( precontent.indexOf('https://therapiequantique.net/read/') >= 0 ) {
 			let repl = precontent.replace(new RegExp('\r?\n','g'), ''); ; 
-			let sdsd = /https:\/\/therapiequantique.net\/note\/u\/(.*)/gi;
+			let sdsd = /https:\/\/therapiequantique.net\/read\/(.*)/gi;
 			let s = sdsd.exec(repl);
 			if ( s[1] ) {
 				console.log( 'update note ici' )  ;
@@ -82,7 +83,7 @@ function loadVocale( notes ) {
 					var [ err , form ] = await Api.get( '/form/'+upnote.id ) ;
 					console.log( form )
 					let text = formateComment( form ) ; 
-        			new listen( content[0] , url , 'audio-liste-note-'+upnote.id , '<div>'+text+'</div>' )
+        			new listen( content[0] , url , 'audio-liste-note-'+upnote.id , '<div><a target="_blank"  href="https://therapiequantique.net/read/'+s[1]+'">https://therapiequantique.net/read/'+s[1]+'</a></div>'+'<div>'+text+'</div>' )
 				}
 			}
 		}
@@ -98,7 +99,7 @@ async function initContent(){
 		return
 	var [ err , app ] = await Api.get( '/application/check/'+encodeURIComponent( contactId )+'/infusionsoft' )
 	console.log( app )
-	if ( ! app.id ) 
+	if ( !app || !app.id ) 
 		return
 	placeButton() ; 
 	//récupération de tout les notes de cette infusionsoft 

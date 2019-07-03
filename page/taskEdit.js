@@ -241,12 +241,12 @@ function formuExtenssionTemplate( NOTEID ){
         let soncas = soncasArray.map(({ value , key })=>{
             return `<option value="${value}">${key}</option>`;
         }) 
-        sujetParent.after( selectTpl('SONCAS :' , soncas , 'soncas-select' , false ) ) ;
+        sujetParent.after( selectTpl('SONCAS :' , soncas , 'soncas-select' , true ) ) ;
         let vitesseclosingArray = formPlace('vitesseclosingArray') ;
         let vitesseclosing = vitesseclosingArray.map(({ value , key })=>{
             return `<option value="${value}">${key}</option>`;
         }) 
-        sujetParent.after( selectTpl('Vitesse Closing :' , vitesseclosing , 'vitesse-closing-select' , true ) ) ;        
+        sujetParent.after( selectTpl('Vitesse Closing :' , vitesseclosing , 'vitesse-closing-select' , false ) ) ;        
         //formulaire de Produit 
         let produitArray = formPlace('produitArray') ; 
         let produit = produitArray.map(({ value , key })=>{

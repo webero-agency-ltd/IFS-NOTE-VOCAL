@@ -145,7 +145,7 @@ function formuExtenssionTemplate( NOTEID ){
 	sujetParent.css({ position: 'absolute' , top: '-6000px', left: '-10000px' })
 	notesParent.css({ position: 'absolute' , top: '-6000px', left: '-10000px' })
 	//ajoute du valeur par défaut dans la descriptions du notes 
-	notes.val( Api.url+'/note/u/'+NOTEID ) ; 
+	notes.val( Api.url+'/read/'+NOTEID ) ; 
 	if ( sujetParent ) {
 		navigator.note&&navigator.note.id?sujetParent.after( '<input onclick="openTask(\'?view=add&Task0ContactId='+navigator.note.contact_id+'&NOTEID='+NOTEID+'&nativeId='+nativeId+'&taskType=task\')" id="ifs-note-vocaux" class="inf-button btn" type="button" value="Convertire en tache vocal">' ):''
 		///////////////////////////////////////////////////////////////
@@ -161,13 +161,13 @@ function formuExtenssionTemplate( NOTEID ){
 		let soncas = soncasArray.map(({ value , key })=>{
 			return `<option value="${value}">${key}</option>`;
 		}) 
-		sujetParent.after( selectTpl('SONCAS :' , soncas , 'soncas-select' , false ) ) ;
+		sujetParent.after( selectTpl('SONCAS :' , soncas , 'soncas-select' , true ) ) ;
 
 		let vitesseclosingArray = formPlace('vitesseclosingArray') ; 
 		let vitesseclosing = vitesseclosingArray.map(({ value , key })=>{
 			return `<option value="${value}">${key}</option>`;
 		}) 
-		sujetParent.after( selectTpl('Vitesse Closing :' , vitesseclosing , 'vitesse-closing-select' , true ) ) ;		
+		sujetParent.after( selectTpl('Vitesse Closing :' , vitesseclosing , 'vitesse-closing-select' , false ) ) ;		
 		//formulaire de Produit 
 		let produitArray = formPlace('produitArray') ; 
 		let produit = produitArray.map(({ value , key })=>{

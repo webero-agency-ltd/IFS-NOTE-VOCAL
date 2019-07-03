@@ -172,9 +172,9 @@ class Vocale {
                     border-radius: 26px;
                 }
                 .btn-recorder{
-                    color: #191919 !important;
-                    background-color: #b3d1e0 !important;
-                    border-color: #191919 !important;
+                    background-color: #02bb07 !important;
+                    border-color: #037106  !important;
+                    color : #000 !important;
                 }
                 .spinner_vocal {
                     border-radius: 50%;

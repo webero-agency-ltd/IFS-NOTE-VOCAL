@@ -397,9 +397,9 @@ FormValueFormate = function(){
 	let comment = $('#comment').val()
     body = [ ...body , { type : 'text' , name : 'comment' , value : comment } ]
 	let vitesse_closing_select = $('#vitesse-closing-select').val()
-    body = [ ...body , { type : 'text' , name : 'vitesse-closing-select' , value : vitesse_closing_select?vitesse_closing_select.join():'' } ]
+    body = [ ...body , { type : 'text' , name : 'vitesse-closing-select' , value : vitesse_closing_select } ]
 	let soncas_select = $('#soncas-select').val()
-    body = [ ...body , { type : 'text' , name : 'soncas-select' , value : soncas_select } ]
+    body = [ ...body , { type : 'text' , name : 'soncas-select' , value : soncas_select?soncas_select.join():'' } ]
 	let produit_select = $('#produit-select').val()
     body = [ ...body , { type : 'text' , name : 'produit-select' , value : produit_select } ]
 	let commercial_autre = $('#commercial_autre').val()
@@ -424,20 +424,18 @@ formateComment = function( form ){
 	for( let { name , value } of form ){
 		if ( name == 'soncas-select' && value !== '') {
 			let val = formPlace('soncasArray')  ;
-			text += '<strong>SONCAS :</strong> </br>'
-			for( let pitem of val ){
-				pitem.value==value?text += ` - ${pitem.key}</br>`:'';
-			}
-		}else if( name == 'vitesse-closing-select' && value ){
-			text += '<strong>Vitesse Closing :</strong> </br>';
-			console.log( value )
 			let ex = value.split(',') ; 
-			console.log( ex )
-			let val = formPlace('vitesseclosingArray')  ;
+			text += '<strong>SONCAS :</strong> </br>'
 			for( let i of ex ){
 				for( let pitem of val ){
 					pitem.value==i?text += ` - ${pitem.key}</br>`:'';
 				}
+			}
+		}else if( name == 'vitesse-closing-select' && value ){
+			text += '<strong>Vitesse Closing :</strong> </br>';
+			let val = formPlace('vitesseclosingArray')  ;
+			for( let pitem of val ){
+				pitem.value==value?text += ` - ${pitem.key}</br>`:'';
 			}
 		}else if( name == 'doemotion' && value !== ''){
 			text += '<strong>Douleur émotionnelle :</strong> </br>'
