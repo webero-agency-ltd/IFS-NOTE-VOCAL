@@ -44,7 +44,7 @@ function areaTpl ( title ,value , id = "" ) {
 
 }
 
-function inputTpl ( title ,value , id , placeholder = "" ) {
+function inputTpl ( title ,value , id , placeholder = "" , text = "text" , min="" , max="" ) {
     return `<tr id="content_${id}" >
         <td class="label-td">
             <label for="${id}">${title}</label></div>
@@ -54,7 +54,7 @@ function inputTpl ( title ,value , id , placeholder = "" ) {
                 <tbody>
                     <tr>
                         <td>
-                            <input id="${id}" name="${id}" type="text" value="${value}" placeholder="${placeholder}" class="default" />
+                            <input id="${id}" name="${id}" type="${text}" value="${value}" min="${min}" max="${max}" placeholder="${placeholder}" class="default" />
                         </td>
                     </tr>
                 </tbody>
@@ -69,23 +69,6 @@ function formateTitle(e){
     var sujet = $('#Task0ActionDescription') ; 
     sujet.val( title ) ;
     console.log( title ) 
-}
-
-function showable( def ){
-    let el = ['comptabilite' , 'sav' , 'commercial' , 'autre']
-    for( let e of el ){
-        if ( def==e ) {
-            $( '#content_'+e ).show()
-            if ( $( '#'+e ).val() =='_____' ) {
-                $( '#content_'+e+'_autre' ).show()
-            }else{
-                $( '#content_'+e+'_autre' ).hide()
-            }
-        }else{
-            $( '#content_'+e ).hide()
-            $( '#content_'+e+'_autre' ).hide()
-        }
-    }
 }
 
 async function dinamicForulaire(){
@@ -111,6 +94,11 @@ async function dinamicForulaire(){
     //changement des catégorie a afficher 
     $('body').on('input','#categorie-select',function ( e ) {
         def = $(this).val() ; 
+        showable( def )
+        formateTitle( def ) ; 
+    })
+
+    $('body').on('input','#autre',function ( e ) {
         showable( def )
         formateTitle( def ) ; 
     })
@@ -226,12 +214,15 @@ function formuExtenssionTemplate( NOTEID ){
     sujetParent.css({ position: 'absolute' , top: '-6000px', left: '-10000px' })
     notesParent.css({ position: 'absolute' , top: '-6000px', left: '-10000px' })
     //ajoute du valeur par défaut dans la descriptions du notes 
-    notes.val( Api.url+'/note/u/'+NOTEID ) ; 
+    notes.val( Api.url+'/read/'+NOTEID ) ; 
     if ( sujetParent ) {
         ///////////////////////////////////////////////////////////////
         //formulaire qui part dans la description a apartire d'ici 
         /////////////////////////////////////////////////////////////
         //formulaire de autre
+        sujetParent.after( areaTpl( 'Objections' , '', 'plaisir') ) ;
+        sujetParent.after( inputTpl( 'Motivation' , '', 'motivation' , '0 a 10' , 'number' ) ) ;
+        sujetParent.after( areaTpl( 'Plaisir' , '', 'plaisir') ) ;
         let dm = '' ; 
         sujetParent.after( areaTpl('Douleur émotionnelle :' , dm, 'doemotion' ) ) ;
         let comment = '' ; 
@@ -396,6 +387,13 @@ async function initContent(){
     placeTaskEditRecorder( ID ) ; 
 }
 
+let ready = false ; 
 $( function () {
-    initContent() ; 
+    Event.on('IntiAppData',async function( request ){
+        if ( !ready ) {
+            ready = true ; 
+            initContent() ; 
+        }
+    })
+    chrome.runtime.connect();
 });

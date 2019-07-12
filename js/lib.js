@@ -1,17 +1,24 @@
-var bytesToSize , formateComment , formPlace , FormValueFormate , Auth , Icon , Dom  , Json , wait , makeid , loadeNoteListe , Note , sendBlobToApp , getParams , extractUrlValue , lecteurTpl ; 
+var showable , bytesToSize , formateComment , formPlace , FormValueFormate , Auth , Icon , Dom  , Json , wait , makeid , loadeNoteListe , Note , sendBlobToApp , getParams , extractUrlValue , lecteurTpl ; 
 
 Auth = {
     checkApiKey: function (cbl) {
-        this.getApiKey(function (res) {
+        this.getApiKey( async function (res) {
             if (res !== '') {
-            	Api.get('/user/authenticated', function ( [ err , data ] ) {
-                    if ( err === null && typeof data.id != 'undefined') {
-                        Icon.setColoredIcon();
-                        if (cbl !== null) {
-                            return cbl(res);
-                        }
-                    }
-                });
+        		let otherinfo = await fetch( Api.url + '/user/authenticated' ) ; 
+				if ( otherinfo.ok ){
+					let { data } = await otherinfo.json() ; 
+					if ( typeof data.id != 'undefined') {
+	                    Icon.setColoredIcon();
+	                    if (cbl !== null) {
+	                        return cbl(res);
+	                    }
+	                    return
+	                }
+				}
+            	Icon.setGreyIcon();
+                if (cbl !== null) {
+                    return cbl(false);
+                }
             } else {
                 Icon.setGreyIcon();
                 if (cbl !== null) {
@@ -197,6 +204,7 @@ Dom = {
 
 Block = {
     changeBlock: function ( template ) {
+    	console.log('---Change AFFICHAGE BLOCK : ' , template  + ".html" ) ; 
         $("#mainFrame")["attr"]("src", template  + ".html");
     },
     syncBlock: function () {
@@ -416,6 +424,13 @@ FormValueFormate = function(){
     body = [ ...body , { type : 'text' , name : 'comptabilite' , value : comptabilite } ]
 	let categorie_select = $('#categorie-select').val()
     body = [ ...body , { type : 'text' , name : 'categorie-select' , value : categorie_select } ]
+    let plaisir = $('#plaisir').val()
+    body = [ ...body , { type : 'text' , name : 'plaisir' , value : plaisir } ]
+    let motivation = $('#motivation').val()
+    body = [ ...body , { type : 'text' , name : 'motivation' , value : motivation } ]
+    let objections = $('#objections').val()
+    body = [ ...body , { type : 'text' , name : 'objections' , value : objections } ]
+    console.log( body )
     return body 
 }
 
@@ -443,6 +458,15 @@ formateComment = function( form ){
 		}else if( name == 'comment' && value !== ''){
 			text += '<strong>Commentaire :</strong></br>'
 			text += ` - ${value}</br>`
+		}else if( name == 'plaisir' && value !== '' ){
+			text += '<strong>Plaisir :</strong></br>'
+			text += ` - ${value}</br>`
+		}else if( name == 'motivation' && value !== '' ){
+			text += '<strong>Motivation :</strong></br>'
+			text += ` - ${value}</br>`
+		}else if( name == 'objections' && value !== '' ){
+			text += '<strong>Objections :</strong></br>'
+			text += ` - ${value}</br>`
 		}
 	}
 	return text
@@ -460,19 +484,23 @@ formPlace = function( opt ){
 		{value : 5 , key : 'Sympathie'} , 
 	]; 
 	objs['vitesseclosingArray'] = [
+		{value : '' , key : ''} , 
 		{value : 0 , key : 'V1 (Rapide)'} , 
 		{value : 1 , key : 'V2 (Moyen)'} , 
 		{value : 2 , key : 'V3 (Lent)'} , 
 	]; 
 	objs['produitArray'] = [
+		{value : '' , key : ''} , 
 		{value : 'Aumscan 4' , key : 'Aumscan 4'} , 
 		{value : 'Aumscan 3' , key : 'Aumscan 3'} , 
 		{value : 'Cardiaum' , key : 'Cardiaum'} , 
 		{value : 'TQ2022' , key : 'TQ2022'} , 
 		{value : 'Coloraum' , key : 'Coloraum'} , 
+		{value : 'Aumscan 4 De Luxe' , key : 'Aumscan 4 De Luxe'} , 
 	] ; 
 
 	objs['commercialArray'] = [
+		{value : '' , key : ''} , 
 		{value : 'Envoyer devis' , key : 'Envoyer devis'} , 
 		{value : 'Relancer' , key : 'Relancer'} , 
 		{value : 'Closer' , key : 'Closer'} , 
@@ -483,12 +511,14 @@ formPlace = function( opt ){
 	] ; 
 
 	objs['savArray'] = [
+		{value : '' , key : ''} , 
 		{value : 'Installation logiciel' , key : 'Installation logiciel'} , 
 		{value : 'Intervention' , key : 'Intervention'} , 
 		{value : '_____' , key : 'Autre (Input Texte libre)'} , 
 	]; 
 
 	objs['comptabiliteArray'] =  [
+		{value : '' , key : ''} , 
 		{value : 'Envoyer document' , key : 'Envoyer document'} , 
 		{value : 'Vérifier paiement' , key : 'Vérifier paiement'} , 
 		{value : 'Gérer impayé' , key : 'Gérer impayé'} , 
@@ -500,6 +530,8 @@ formPlace = function( opt ){
 		{value : 'sav' , key : 'SAV'} , 
 		{value : 'commercial' , key : 'COMMERCIAL'} , 
 		{value : 'autre' , key : 'AUTRE'} , 
+		{value : 'marketing' , key : 'Marketing'} , 
+		{value : 'technique' , key : 'Technique'} , 
 	]; 
 
 	if ( objs[opt] ) 
@@ -509,8 +541,40 @@ formPlace = function( opt ){
 }
 
 bytesToSize = function (bytes) {
-   var sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-   if (bytes == 0) return '0 Byte';
-   var i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
-   return Math.round(bytes / Math.pow(1024, i), 2) + ' ' + sizes[i];
+   	var sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+   	if (bytes == 0) return '0 Byte';
+   	var i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
+   	return Math.round(bytes / Math.pow(1024, i), 2) + ' ' + sizes[i];
+};
+
+showable = function ( def ) {
+   	let el = ['comptabilite' , 'sav' , 'commercial' , 'autre']
+	for( let e of el ){
+		if ( def==e ) {
+			$( '#content_'+e ).show()
+			if ( $( '#'+e ).val() =='_____' ) {
+				$( '#content_'+e+'_autre' ).show()
+			}else{
+				$( '#content_'+e+'_autre' ).hide()
+			}
+		}else{
+			$( '#content_'+e ).hide()
+			$( '#content_'+e+'_autre' ).hide()
+		}
+		if ( def=='commercial' ) {
+			$('#content_objections').show() ; 
+			$('#content_motivation').show() ; 
+			$('#content_plaisir').show() ; 
+			$('#content_doemotion').show() ; 
+			$('#content_soncas-select').show() ; 
+			$('#content_vitesse-closing-select').show() ; 
+		}else{
+			$('#content_objections').hide() ; 
+			$('#content_motivation').hide() ; 
+			$('#content_plaisir').hide() ; 
+			$('#content_doemotion').hide() ; 
+			$('#content_soncas-select').hide() ; 
+			$('#content_vitesse-closing-select').hide() ; 
+		}
+	}
 };

@@ -44,8 +44,8 @@ class Vocale {
             e.stopPropagation()
             var constraints = { audio: true, video:false }
             recordButton.disabled = true;
+            uploadButton.disabled = true;
             stopButton.disabled = false;
-            //pauseButton.disabled = false
             recordButtonLoader.style.display = 'inline-block';
             navigator.mediaDevices.getUserMedia(constraints).then(function(stream) {
                 console.log("getUserMedia() success, stream created, initializing Recorder.js ...");
@@ -64,7 +64,7 @@ class Vocale {
                 console.log( err )
                 recordButton.disabled = false;
                 stopButton.disabled = true;
-                //pauseButton.disabled = true
+                uploadButton.disabled = false
             });
         }
 
@@ -89,6 +89,7 @@ class Vocale {
             e.stopPropagation()
             stopButton.disabled = true;
             recordButton.disabled = false;
+            uploadButton.disabled = false
             //pauseButton.disabled = true;
             //pauseButton.innerHTML="Pause";
             rec.stop();
@@ -149,7 +150,7 @@ class Vocale {
         let tpl = `<div>
             <div id="recorder-info" style="display: none;">
                 <div style="display: flex;">
-                    <div id="logo-recorded" class="recorder-style active "></div>
+                    <div id="logo-recorded" class="recorder-style active"></div>
                     <input id="counter-recorded" style="width: 100px; margin-left: 6px;" disabled="disabled" name="timer" type="text" value="00 : 00" />
                 </div>
             </div>
@@ -159,9 +160,9 @@ class Vocale {
                     Record
                 </button>
                 <!--<button id="pauseButton" disabled>Pause</button>-->
-                <button class="btn btn-recorder" id="stopButton" disabled>Stop</button>
+                <button class="btn btn-stop" id="stopButton" disabled>Stop</button>
                 <!--<button id="deleteButton" disabled>Effacer</button>-->
-                <button class="btn btn-recorder" id="uploadButton">Télécharger</button>
+                <button class="btn btn-upload" id="uploadButton">Télécharger</button>
                 <input style="position: absolute; top: -30000px; left: -30000px;" type="file" id="audio-upload" name="avatar" accept="audio/*">
             </div>
             <style>
@@ -172,8 +173,18 @@ class Vocale {
                     border-radius: 26px;
                 }
                 .btn-recorder{
+                    background-color: #ff0000 !important;
+                    border-color: #da1212 !important;
+                    color : #000 !important;
+                }
+                .btn-upload{
                     background-color: #02bb07 !important;
                     border-color: #037106  !important;
+                    color : #000 !important;
+                }
+                .btn-stop{
+                    background-color: #00a1ff !important;
+                    border-color: #0076bb;
                     color : #000 !important;
                 }
                 .spinner_vocal {
@@ -191,6 +202,16 @@ class Vocale {
                     -webkit-animation: spin 1s infinite linear;
                 }
                 .btn-recorder:disabled {
+                    color: #404040 !important;
+                    background-color: #e7e8e8 !important;
+                    border-color: #b7b7b7 !important;
+                }
+                .btn-upload:disabled  {
+                    color: #404040 !important;
+                    background-color: #e7e8e8 !important;
+                    border-color: #b7b7b7 !important;
+                }
+                .btn-stop:disabled {
                     color: #404040 !important;
                     background-color: #e7e8e8 !important;
                     border-color: #b7b7b7 !important;

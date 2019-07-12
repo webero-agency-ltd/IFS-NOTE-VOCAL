@@ -43,6 +43,7 @@ function emit(e,d,_tab) {
 
 Event.on('requestApi',async function( data ){
     let { url , method , headers , body , type , event } = data ; 
+    console.log('requestApi' , { url , method , headers , body , type , event } )
     let uploadResponse = null ;
     if ( method ) {
         let formData = new FormData();
@@ -110,18 +111,20 @@ Event.on('sendData',async function( request ){
                 }
             }           
             file = mergedBlob ; 
-            emit( 'sendDataOk' , null )
+            emit( 'sendDataOk' , null , 'all' )
         }
     }
 })
 
 //écoute evene
 chrome.runtime.onConnect.addListener(function (externalPort) {
-    onupload = false ; 
-    externalPort.onDisconnect.addListener(async function() {
-
+    Auth.checkApiKey(function(APIkey){
+        if ( APIkey ) 
+            emit('IntiAppData',true,'all')
+        else
+           Auth.logoutAction() ;
     });
+    externalPort.onDisconnect.addListener(async function() {});
 })
-
 
 Block.syncBlock();

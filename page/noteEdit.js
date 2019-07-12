@@ -22,38 +22,22 @@ function areaTpl( title ,value , id = "" ) {
 	</div>` ; 
 }
 
-function inputTpl ( title ,value , id , placeholder = "" ) {
+function inputTpl ( title ,value , id , placeholder = "" , text = "text" , min="" , max="" ) {
 	return  `<div id="content_${id}" class="fieldContainer fieldContainerMargin">
 	    <div class="fieldLabel fieldLabelVerticalAlignTop">
 	        <label class="action-label-area" for="${id}">${title}</label></div>
 	    <div class="fieldControl">
-	    	<input id="${id}" name="${id}" type="text" value="${value}" placeholder="${placeholder}" class="default" />
+	    	<input id="${id}" name="${id}" type="${text}" value="${value}" min="${min}" max="${max}" placeholder="${placeholder}" class="default" />
 	    </div>
 	</div>` ; 
 }
 
-
 function formateTitle(e){
-	let title = e.toUpperCase()+' '+$('#produit-select').val()+' - '+( $('#'+e).val() !== '_____' ? $('#'+e).val() : $('#'+e+'_autre').val() ); 
+	let evalue = $('#'+e).val() ;
+	console.log( evalue ) ; 
+	let	title = e.toUpperCase()+' '+$('#produit-select').val()+' - '+( $('#'+e).val() !== '_____' ? $('#'+e).val() : $('#'+e+'_autre').val() ); 
   	$('#subject').val( title ) ;
-  	console.log( title ) 
-}
-
-function showable( def ){
-	let el = ['comptabilite' , 'sav' , 'commercial' , 'autre']
-	for( let e of el ){
-		if ( def==e ) {
-			$( '#content_'+e ).show()
-			if ( $( '#'+e ).val() =='_____' ) {
-				$( '#content_'+e+'_autre' ).show()
-			}else{
-				$( '#content_'+e+'_autre' ).hide()
-			}
-		}else{
-			$( '#content_'+e ).hide()
-			$( '#content_'+e+'_autre' ).hide()
-		}
-	}
+  	console.log(' -TITLE : ' , title ) ; 
 }
 
 async function dinamicForulaire(){
@@ -70,7 +54,6 @@ async function dinamicForulaire(){
 			}
 			console.log( NoteId , name , type , value )
 			$('#'+name).val( value )
-
 		}
 	}
 	//on cache tout d'abord les éléments inutilement de l'application
@@ -104,6 +87,11 @@ async function dinamicForulaire(){
 	})
 
 	$('body').on('input','#categorie-select',function ( e ) {
+		showable( def )
+		formateTitle( def ) ; 
+	})
+
+	$('body').on('input','#autre',function ( e ) {
 		showable( def )
 		formateTitle( def ) ; 
 	})
@@ -152,6 +140,9 @@ function formuExtenssionTemplate( NOTEID ){
 		//formulaire qui part dans la description a apartire d'ici 
 		/////////////////////////////////////////////////////////////
 		//formulaire de autre
+		sujetParent.after( areaTpl( 'Objections' , '', 'objections') ) ;
+		sujetParent.after( inputTpl( 'Motivation' , '', 'motivation' , '0 a 10' , 'number' ) ) ;
+		sujetParent.after( areaTpl( 'Plaisir' , '', 'plaisir') ) ;
 		let dm = '' ; 
 		sujetParent.after( areaTpl('Douleur émotionnelle :' , dm, 'doemotion' ) ) ;
 		let comment = '' ; 
@@ -340,6 +331,7 @@ async function initContent(){
 		}
 		var [ err , native ] = await Api.get( '/infusionsoft/note/'+ID + '/?appId='+navigator.app.id) ; 
 		console.log( native )
+		console.log( '/infusionsoft/note/'+ID + '/?appId='+navigator.app.id ) ; 
 		if ( ! native.contact_id ) 
 			return !1
 		console.log("666")
@@ -349,6 +341,13 @@ async function initContent(){
 	placeNoteEditRecorder( ID ) ; 
 }
 
+let ready = false ; 
 $( function () {
-    initContent() ; 
+    Event.on('IntiAppData',async function( request ){
+	    if ( !ready ) {
+	    	ready = true ; 
+	    	initContent() ; 
+	    }
+	})
+	chrome.runtime.connect();
 });

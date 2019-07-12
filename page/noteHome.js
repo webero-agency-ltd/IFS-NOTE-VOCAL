@@ -108,6 +108,13 @@ async function initContent(){
 	loadVocale( note ) ; 
 }
 
+let ready = false ; 
 $( function () {
-    initContent() ; 
+    Event.on('IntiAppData',async function( request ){
+	    if ( !ready ) {
+	    	ready = true ; 
+	    	initContent() ; 
+	    }
+	})
+	chrome.runtime.connect();
 });
