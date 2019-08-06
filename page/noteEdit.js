@@ -237,66 +237,55 @@ function placeNoteEditRecorder( ID ) {
         note = blob ; 
         $('#noteSaveTemp').attr('disabled',false)
         Event.emit('resetData')
-    	setTimeout(function() {
-    		sendBlobToApp(blob);
-    		file = true ; 
-    	}, 500);
+    	setTimeout(function() { sendBlobToApp(blob,'noteeditefile'); }, 100);
     }
+
+    Event.on('send_files_ok', ( data ) => {
+    	if( data == 'filenoteeditefile' )
+			file = true ; 
+	})
+
 	noteSave.hide() ; 
 	//on clique sur l'enregistrement de note 
     noteSave.before( '<button '+(desable?'disabled="disabled"':'')+' class="inf-button btn primary button-save" id="noteSaveTemp">Save</button>' ) ; 
 	$('body').on('click','#noteSaveTemp', async ( e ) => {
         $('#noteSaveTemp').html('<i style="display:inline-block; vertical-align: middle; " class="spinner_vocal"></i>...Upload');
-		e.preventDefault() ;
-		e.stopPropagation() ;
+		e.preventDefault() ; e.stopPropagation() ;
 	    vo.upload()
-		setTimeout( async function() {
-			let url = '/upload?' ; 
-	        url += 'NOTEID='+NOTEID
-	        url += '&type=infusionsoft' 
-	        url += '&appId='+navigator.app.id
-	        url += '&attache=note' 
-	        url += '&text='+''
-	        url += '&title='+''
-	        if ( ID ) {
-	        	console.log( ID )
-	        	url += '&update='+true
-	        }
-	        if ( file ) {
-	        	url += '&file='+true
-	        }else{
-	        	url += '&file='+false
-	        }
-	        console.log('START PLOAD' , url )
-			let [ err , post ] = await Api.post( url , { 
-				body : {
-					file : true , 
-				},
-				type : 'formData'
-			})
-	        //url += '&text='+generaleNote
-	        //url += '&title='+generaleTitle
-	        vo.stopUpload()
-	        let urlForm = '/form/'+post.id ; 
-	        console.log( 'Upload a formulaire' , urlForm )
-	        let body = FormValueFormate() ; 
-			let [ error , form ] = await Api.post( urlForm , { 
-				body : { data : body } , 
-				headers: {
-		            'Accept': 'application/json',
-		            'Content-Type': 'application/json'
-		        },
-			})
-	        console.log( body )
-	        console.log( form )
-	        console.log( error )
-	        console.log( post )
-	        /////////////////// 
-	        if ( post.id ) {
-	        	$('#noteSaveTemp').html('Save');
-	        	noteSave.trigger('click')
-			}
-		}, 500);
+	    let body = {
+	    	unique : NOTEID ,
+	    	application_id : navigator.app.id ,
+            type : 'infusionsoft' ,
+	    	attache : 'note' ,
+	    	filenoteeditefile : true ,
+	    }
+        ID?body['update'] = true : ''; 
+        file?body['file'] = true : body['file'] = false  ; 
+		let [ err , post ] = await Api.fetch( '/api/note' , { 
+			method : 'POST',
+			headers : true , 
+			body 
+		})
+		if ( !post ||( post && !post.data ) ||( post && post.data && !post.data.id ) ) {
+			alert('une erreur est survenue')
+			return !1;
+		}
+
+		let [ error , form ] = await Api.fetch( '/api/form/'+post.data.id , { 
+			method : 'POST',
+			headers : true , 
+			body : { forms : JSON.stringify(FormValueFormate()) }
+		})
+        vo.stopUpload()
+        console.log( body )
+        console.log( form )
+        console.log( error )
+        console.log( post )
+        /////////////////// 
+        if ( post.data.id ) {
+        	$('#noteSaveTemp').html('Save');
+        	noteSave.trigger('click')
+		}
     })
     formuExtenssionTemplate( NOTEID )
 
@@ -316,8 +305,10 @@ async function initContent(){
 	if ( !contactId ) 
 		return
 	console.log("333")
-	var [ err , app ] = await Api.get( '/application/check/'+encodeURIComponent( contactId )+'/infusionsoft' ) ; 
-	if ( ! app.id ) 
+	var [ err , resp ] = await Api.fetch( '/api/application/check/ifs/'+encodeURIComponent( contactId ) ) ; 
+	let app = resp.data ; 
+	console.log( app ) ;
+	if ( !app.id ) 
 		return !1
 	console.log("444")
 	navigator.app = app ;

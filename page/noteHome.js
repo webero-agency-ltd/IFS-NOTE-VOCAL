@@ -97,19 +97,20 @@ async function initContent(){
 	let contactId = s[1] ; 
 	if ( !contactId ) 
 		return
-	var [ err , app ] = await Api.get( '/application/check/'+encodeURIComponent( contactId )+'/infusionsoft' )
-	console.log( app )
+	var [ err , resp ] = await Api.fetch( '/api/application/check/ifs/'+encodeURIComponent( contactId ) )
+	let app = resp.data ; 
 	if ( !app || !app.id ) 
 		return
 	placeButton() ; 
 	//récupération de tout les notes de cette infusionsoft 
-	var [ err , note ]  = await Api.get( '/notes/'+app.id ) ;
-	console.log( note , err ) 
-	loadVocale( note ) ; 
+	var [ err , note ]  = await Api.fetch( '/api/notes/'+app.id ) ;
+	console.log( note ) 
+	note?loadVocale( note ):'';
 }
 
 let ready = false ; 
 $( function () {
+	console.log( 'IntiAppData' ) ;
     Event.on('IntiAppData',async function( request ){
 	    if ( !ready ) {
 	    	ready = true ; 

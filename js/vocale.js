@@ -21,7 +21,6 @@ class Vocale {
         var recorderInfo = document.getElementById("recorder-info");
         var uploadButton = document.getElementById("uploadButton");
         var audioUpload = document.getElementById("audio-upload");
-        console.log( recordButton )
         recordButton.addEventListener("click", startRecording);
         stopButton.addEventListener("click", stopRecording);
         uploadButton.addEventListener("click", ( e )=>{
@@ -39,7 +38,6 @@ class Vocale {
             }
         }
         function startRecording(e) {
-            console.log("recordButton clicked");
             e.preventDefault()
             e.stopPropagation()
             var constraints = { audio: true, video:false }
@@ -48,7 +46,6 @@ class Vocale {
             stopButton.disabled = false;
             recordButtonLoader.style.display = 'inline-block';
             navigator.mediaDevices.getUserMedia(constraints).then(function(stream) {
-                console.log("getUserMedia() success, stream created, initializing Recorder.js ...");
                 recordButtonLoader.style.display = 'none';
                 audioContext = new AudioContext();
                 //document.getElementById("formats").innerHTML="Format: 1 channel pcm @ "+audioContext.sampleRate/1000+"kHz"
@@ -61,7 +58,6 @@ class Vocale {
                 //logoRecorder.addClass('active') ;
                 // element.classList.add("mystyle"); 
             }).catch(function(err) {
-                console.log( err )
                 recordButton.disabled = false;
                 stopButton.disabled = true;
                 uploadButton.disabled = false
@@ -69,7 +65,6 @@ class Vocale {
         }
 
         function pauseRecording(e){
-            console.log("pauseButton clicked rec.recording=",rec.recording );
             e.preventDefault()
             e.stopPropagation()
             if (rec.recording){
@@ -84,7 +79,6 @@ class Vocale {
         }
 
         function stopRecording(e) {
-            console.log("stopButton clicked");
             e.preventDefault()
             e.stopPropagation()
             stopButton.disabled = true;
@@ -119,11 +113,10 @@ class Vocale {
             upload.href="#";
             upload.innerHTML = "Upload";
             upload.addEventListener("click", function(event){
-                console.log('--- UPLOAD')
                 var xhr=new XMLHttpRequest();
                 xhr.onload=function(e) {
                     if(this.readyState === 4) {
-                        console.log("Server returned: ",e.target.responseText);
+                
                     }
                 };
                 var fd=new FormData();

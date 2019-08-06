@@ -1,56 +1,40 @@
 var showable , bytesToSize , formateComment , formPlace , FormValueFormate , Auth , Icon , Dom  , Json , wait , makeid , loadeNoteListe , Note , sendBlobToApp , getParams , extractUrlValue , lecteurTpl ; 
+var DOMAINE = "http://localhost:8000" ;
 
 Auth = {
-    checkApiKey: function (cbl) {
-        this.getApiKey( async function (res) {
-            if (res !== '') {
-        		let otherinfo = await fetch( Api.url + '/user/authenticated' ) ; 
-				if ( otherinfo.ok ){
-					let { data } = await otherinfo.json() ; 
-					if ( typeof data.id != 'undefined') {
-	                    Icon.setColoredIcon();
-	                    if (cbl !== null) {
-	                        return cbl(res);
-	                    }
-	                    return
-	                }
-				}
-            	Icon.setGreyIcon();
-                if (cbl !== null) {
-                    return cbl(false);
-                }
-            } else {
-                Icon.setGreyIcon();
-                if (cbl !== null) {
-                    return cbl(false);
-                }
-            }
-        });
+    checkApiKey: async function () {
+        let res = await this.getApiKey();
+        if (res !== '') {
+        	let [ err , resp ] = await Api.fetch('/api/user') ; 
+        	if( resp && resp.id != 'undefined' ){
+        		Icon.setColoredIcon();
+                return res
+        	}
+        }
+        Icon.setGreyIcon();
+        return false;
     },
-    setApiKey: function ( apiKey ) {
-        chrome.storage.sync.set({ apiKey }, function () {
-            return true;
-        });
+    setApiKey: async function ( apiKey ) {
+    	console.log("Enregistrement ....")
+        return new Promise((resolve, reject) => {
+		    chrome.storage.sync.set({ apiKey : apiKey }, function ( e ) {
+	            return resolve( apiKey );
+	        });
+		});
     },
-    getApiKey: function (cbl) {
-        chrome.storage.sync.get('apiKey', function (res) {
-            res["apiKey"] ? apiKey = res["apiKey"] : apiKey = "";
-            return cbl(apiKey);
-        });
+    getApiKey: async function () {
+        return new Promise((resolve, reject) => {
+		    chrome.storage.sync.get('apiKey', function (res) {
+	            res["apiKey"] ? apiKey = res["apiKey"] : apiKey = "";
+	            return resolve( apiKey );
+	        });
+		});
     },
-    getUser: function (cbl) {
-        this.getApiKey(function (apiKey) {
-            if (apiKey !== false) {
-                Api.get('/user/authenticated', function (user) {
-                    return cbl(user);
-                });
-            } else {
-                return cbl(false);
-            }
-        });
-    },
-    logoutAction: function (c8) {
-        chrome.storage.sync.clear(c8);
+    logoutAction: async function (c8) {
+        let [ err , resp ] = await Api.fetch('/api/logout') ; 
+        if( resp ){
+        	chrome.storage.sync.clear(c8);
+        }
         Icon.setGreyIcon();
     }
 };
@@ -86,81 +70,39 @@ Json = {
 }
 
 Api = {
-	//url : "http://localhost:3000" , 
-	url : "https://therapiequantique.net" , 
-	port : "3000" , 
-	//port : "" , 
-	domaine : "localhost" , 
-	//domaine : "therapiequantique.net" , 
-    get: function ( entpoint , cbl ) {
-    	return new Promise((resolve, reject) => {
-		    Auth.getApiKey( async function (apiKey) {
-	            if (typeof apiKey != 'undefined' && apiKey !== '') {
-	            	if (entpoint.indexOf("?") == '-1') {
-	                    urlCall = Api.url + entpoint + "?apiKey=" + apiKey;    
-	                } else {
-	                    urlCall = Api.url + entpoint + "&apiKey=" + apiKey;    
-	                }
-	                //lancement de l'évenement de requestio
-	                //dans le backend pour éliminer 
-	                //l'érreur de l'origine croiser  
-	                var uniq = 'id' + (new Date()).getTime() + makeid(12) ;
-	                //console.log( uniq , '______________________++++++++++++++++')
-	                Event.on(uniq, async function( uploadResponse ){
-	                	cbl?cbl( uploadResponse ):"";
-	                	console.log( uploadResponse )
-	                	setTimeout(function() {
-	                		Event.delete( uniq )
-	                	}, 1000);
-					    return resolve( uploadResponse )
-	                } , true )
-	                Event.emit('requestApi', {
-	                	url : urlCall , 
-	                	event : uniq ,
-	                })
-	            } else {
-				    cbl?cbl( [ false , false ] ):""
-				    return resolve( [ false , false ] )
-	            }
-	        });
+	url : DOMAINE , 
+	fetch : function( url , option ){
+		return new Promise( async (resolve, reject) => {
+			let apiKey = await Auth.getApiKey() ; 
+			if( !apiKey )
+				return [ true , false ] ; 
+			let headers = {'Authorization': 'Bearer ' + apiKey, 'X-Requested-With' : 'XMLHttpRequest' } ; 
+			if ( !option || ( option && !option.headers )) {
+				headers['Accept'] = 'application/json' ; 
+				headers['Content-Type'] = 'application/json' ; 
+			}  
+			let options = {
+				type : option && option.method ? option.method : null ,
+				method : option && option.method ? option.method : 'GET' ,
+				body : option && option.method !=='GET' && option.body ? option.body : {} ,
+				headers
+			}
+			if( typeof background !== 'undefined' )
+				return resolve(request( Api.url + url , options ));
+			var uniq = 'id' + (new Date()).getTime() + makeid(12) ;
+	        Event.on(uniq, async function( res ){
+	        	setTimeout(function() {
+	        		Event.delete( uniq )
+	        	}, 1000);
+			    return resolve( res )
+	        } , true )
+	        Event.emit('request', {
+	        	url : Api.url + url , 
+	        	event : uniq ,
+	        	options
+	        })
 		});
-    },
-    post( entpoint , { body , method = 'POST' , headers = {} , type = false } , cbl ){
-    	return new Promise((resolve, reject) => {
-		    Auth.getApiKey( async function (apiKey) {
-	            if (typeof apiKey != 'undefined' && apiKey !== '') {
-	            	if (entpoint.indexOf("?") == '-1') {
-	                    urlCall = Api.url + entpoint + "?apiKey=" + apiKey;    
-	                } else {
-	                    urlCall = Api.url + entpoint + "&apiKey=" + apiKey;    
-	                }
-	                //lancement de l'évenement de requestio
-	                //dans le backend pour éliminer 
-	                //l'érreur de l'origine croiser  
-	                var uniq = 'id' + (new Date()).getTime() + makeid(12) ;
-	                Event.on( uniq , async function( uploadResponse ){
-	                	cbl?cbl( uploadResponse ):""
-	                	setTimeout(function() {
-	                		Event.delete( uniq )
-	                	}, 1000);
-	                	console.log( uploadResponse )
-					    return resolve( uploadResponse )
-	                })
-	                Event.emit('requestApi', {
-	                	url : urlCall , 
-	                	body , 
-	                	method , 
-	                	headers , 
-	                	type , 
-	                	event : uniq
-	                })
-	            } else {
-				    cbl?cbl( [ false , false ] ):""
-				    return resolve( [ false , false ] )
-	            }
-	        });
-		});
-    }
+	}
 };
 
 Dom = {
@@ -310,8 +252,7 @@ loadeNoteListe = async function (length) {
 }
 
 
-sendBlobToApp = function ( blob ) {  
-	console.log( blob )
+sendBlobToApp = function ( blob , id ) {  
   	var CHUNK_SIZE = 256 * 1024;
  	var start = 0;
   	var stop = CHUNK_SIZE;      
@@ -324,9 +265,10 @@ sendBlobToApp = function ( blob ) {
       	var message = {
         	blobAsText: fr.result,
         	mimeString: 'audio/wav',                 
-        	chunks: chunks 
+        	chunks: chunks ,
+        	id , 
       	};          
-      	Event.emit('sendData' , message )
+      	Event.emit('send_files' , message )
       	processChunk();
   	};
   	fr.onerror = function() { appendLog("An error ocurred while reading file"); };

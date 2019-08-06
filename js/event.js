@@ -5,13 +5,10 @@ let on = {} ;
 
 var Event = {
     on: function ( event , func , onEvent ) {
-        if (on[event]) {
-        	console.log( onEvent ) ; 
-        	if ( onEvent ) return
-        }
-		else{
-			on[event] = [] ;
-		}
+        //si l'évenement est une evenement unique 
+        if ( on[event] && onEvent ) return
+        //si l'évenement n'existe pas ecore 
+        if( !on[event] ) on[event] = [] ;
 		return on[event].push(func);
     },
     emit: function ( event, option ) {

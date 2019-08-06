@@ -1,8 +1,10 @@
+let background = true ;
+
 chrome.runtime.onMessageExternal.addListener(function ( data ) {
     console.log( data )
     if (data["setApiKey"]) {
         key = data["setApiKey"];
-        Auth.setApiKey(key);
+        Auth.setApiKey(key.access_token);
         Auth.checkApiKey(function (apiKey) {
             var a67;
             if (apiKey !== !1) {
@@ -15,115 +17,46 @@ chrome.runtime.onMessageExternal.addListener(function ( data ) {
     } 
 });
 
-function emit(e,d,_tab) {
+function emit(e,d) {
     chrome.tabs.query({}, 
         function (tabs) {
-            if ( _tab === 'all' ) {
-                for (var i = 0; i < tabs.length; i++) {
-                    chrome.tabs.sendMessage(
-                        tabs[i].id,
-                        {name: e, data: d},
-                    );
-                }
-                return;
+            for (var i = 0; i < tabs.length; i++) {
+                chrome.tabs.sendMessage( tabs[i].id, {name: e, data: d} );
             }
-            let tablable = 0 ; 
-            if (_tab!=null) {
-                tablable = _tab
-            } else if(tabs[0]){
-                tablable = tabs[0].id 
-            }
-            chrome.tabs.sendMessage(
-                tablable,
-                {name: e, data: d},
-            );
         }
     );
 }
 
-Event.on('requestApi',async function( data ){
-    let { url , method , headers , body , type , event } = data ; 
-    console.log('requestApi' , { url , method , headers , body , type , event } )
-    let uploadResponse = null ;
-    if ( method ) {
-        let formData = new FormData();
-        if ( type == 'formData' ) {
-            let keys = Object.keys( body )
-            for (var i = 0; i < keys.length; i++) {
-                if ( keys[i] == 'file' ) {
-                    formData.append('file', file );
-                }else{
-                    formData.append(keys[i], body[keys[i]] );
-                }
-            }
-            body = formData ; 
-        }else{
-            body = JSON.stringify( body )
+//préfomatage des requests en post 
+Event.on('request',async function( data ){
+    let formData = new FormData();
+    let { type , url , options , event } = data ; 
+    let body = null ; 
+    console.log( options , type )
+    if ( options && options.body ) {
+        let keys = Object.keys( options.body )
+        for (var i = 0; i < keys.length; i++) {
+            if ( file[keys[i]] ) 
+                formData.append('file', file[keys[i]] );
+            else
+                formData.append( keys[i], options.body[keys[i]] );
         }
-        console.log( body )
-        uploadResponse = await fetch( url , { method , headers , body } )
-    }else{
-        uploadResponse = await fetch( url )
-    }
-    if ( uploadResponse.ok ) { 
-        let json = null ; 
-        try {
-            json = await uploadResponse.json() ;
-        } catch(e) {
-            return emit( event , [ { message : 'FORMAT ERROR' }, null]  ,'all' )
-        }
-        console.log( '--- RESPONSE CALL' , url , method , event )
-        console.log( json )
-        if ( json && json.type == 'ERROR' ) {
-            return emit( event ,[ json , null ] ,'all' );
-        }
-        return emit( event ,[ null, json.data ]  ,'all') ; 
-    }
-    return emit( event , [ true, null ] ,'all' )
-})
-
-var _chunkIndex = 0 ; 
-var _blobs = [] ; 
-var file = null ; 
-
-Event.on('resetData',async function( request ){
-    file = null;
-    _chunkIndex = 0 ; 
-    _blobs = [] ; 
-})
-
-Event.on('sendData',async function( request ){
-    if (request.blobAsText) {                  
-        _chunkIndex++;                   
-        var bytes = new Uint8Array(request.blobAsText.length);                     
-        for (var i=0; i<bytes.length; i++) {
-            bytes[i] = request.blobAsText.charCodeAt(i);            
-        }         
-        _blobs[_chunkIndex-1] = new Blob([bytes], {type: request.mimeString});           
-        if (_chunkIndex == request.chunks) {                      
-            for (j=0; j<_blobs.length; j++) {
-                var mergedBlob;
-                if (j>0) {                  
-                   mergedBlob = new Blob([mergedBlob, _blobs[j]], {type: request.mimeString});
-                }
-                else {                  
-                   mergedBlob = new Blob([_blobs[j]], {type: request.mimeString});
-                }
-            }           
-            file = mergedBlob ; 
-            emit( 'sendDataOk' , null , 'all' )
-        }
-    }
+        body = formData ; 
+    } 
+    body ? data.options.body = body : '' ; 
+    let res = await request( url , data.options ) ; 
+    console.log('---RESPONSE BACKROUDN : ' , res )
+    return emit( event , res ,'all' )
 })
 
 //écoute evene
 chrome.runtime.onConnect.addListener(function (externalPort) {
-    Auth.checkApiKey(function(APIkey){
-        if ( APIkey ) 
-            emit('IntiAppData',true,'all')
-        else
-           Auth.logoutAction() ;
-    });
+    let APIkey = Auth.checkApiKey();
+    console.log('--- initialisation de tout les app data')
+    if ( APIkey ) 
+        emit('IntiAppData',true,'all')
+    else
+       Auth.logoutAction() ;
     externalPort.onDisconnect.addListener(async function() {});
 })
 

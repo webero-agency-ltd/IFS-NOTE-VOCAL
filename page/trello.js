@@ -9,7 +9,7 @@ function placeNoteEditRecorder( note ) {
 	console.log( note )
 	let pages = document.querySelector( 'body' ) ; 
 	let ready = false ; 
-	Event.on('sendDataOk',function( request ){
+	Event.on('send_files_ok',function( request ){
 	    vo.upload()
     	setTimeout(async function() {
     		console.log('----UPLOAD RUN')

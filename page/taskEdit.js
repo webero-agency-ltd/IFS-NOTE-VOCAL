@@ -148,45 +148,39 @@ async function dinamicForulaire(){
 async function upload( NOTEID , file , save = true  ){
     setTimeout( async function() {
         vo.upload()
-        let url = '/upload?' ; 
-        url += 'NOTEID='+NOTEID
-        url += '&type=infusionsoft' 
-        url += '&attache=task' 
-        url += '&appId='+navigator.app.id
-        url += '&text='
-        url += '&title='
-        if ( navigator.task && navigator.task.id ) {
-            url += '&update='+true
+        let body = {
+            unique : NOTEID ,
+            application_id : navigator.app.id ,
+            attache : 'task' ,
+            type : 'infusionsoft' ,
+            filenoteeditefile : true ,
         }
-        if ( file ) {
-            url += '&file='+true
-        }else{
-            url += '&file='+false
+        navigator.task && navigator.task.id?body['update'] = true : ''; 
+        file?body['file'] = true : body['file'] = false  ; 
+        let [ err , post ] = await Api.fetch( '/api/note' , { 
+            method : 'POST',
+            headers : true , 
+            body 
+        })
+        if ( !post ||( post && !post.data ) ||( post && post.data && !post.data.id ) ) {
+            alert('une erreur est survenue')
+            return !1;
         }
-        let [ err , post ] = await Api.post( url , { 
-            body : {
-                file : true
-            },
-            type : 'formData'
+
+        console.log( post ) ; 
+        let [ error , form ] = await Api.fetch( '/api/form/'+post.data.id , { 
+            method : 'POST',
+            headers : true , 
+            body : { forms : JSON.stringify(FormValueFormate()) }
         })
         vo.stopUpload()
-        let urlForm = '/form/'+post.id ; 
-        console.log( 'Upload a formulaire' , urlForm )
-        document.getElementById( 'autre')
-        let body = FormValueFormate() ; 
-        let [ error , form ] = await Api.post( urlForm , { 
-            body : { data : body } , 
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            },
-        })
+
         console.log( body )
         console.log( form )
         console.log( error )
         console.log( post )
         /////////////////// 
-        if ( post.id ) {
+        if ( post.data.id ) {
             if ( save ) {
                 $('#noteSaveTemp').html('Save');
                 $('#Save').trigger('click')
@@ -317,11 +311,14 @@ function placeTaskEditRecorder( ID ) {
         $('#noteSaveTemp').attr('disabled',false)
         $('#SaveAndNewTemp').attr('disabled',false)
         Event.emit('resetData')
-        setTimeout(function() {
-            sendBlobToApp(blob);
-            file = true ; 
-        }, 500);
+        setTimeout(function() { sendBlobToApp(blob,'noteeditefile'); }, 100);
     }
+
+    Event.on('send_files_ok', ( data ) => {
+        if( data == 'filenoteeditefile' )
+            file = true ; 
+    })
+
 	SaveAndNew.hide() ; 
 	noteSave.hide() ; 
     noteSave.before( '<button '+(desable?'disabled="disabled"':'')+' class="inf-button btn primary button-save" id="noteSaveTemp">Save</button>' ) ; 
@@ -356,8 +353,9 @@ async function initContent(){
     console.log( contactId)
     if ( !contactId ) 
         return
-    var [ err , app ] = await Api.get( '/application/check/'+encodeURIComponent( contactId )+'/infusionsoft' ) ; 
-    console.log( app )
+    var [ err , resp ] = await Api.fetch( '/api/application/check/ifs/'+encodeURIComponent( contactId ) ) ; 
+    let app = resp.data ; 
+    console.log( app ) ;
     if ( !app.id ) 
         return !1
     navigator.app = app ; 

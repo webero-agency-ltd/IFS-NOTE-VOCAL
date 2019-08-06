@@ -30,13 +30,15 @@
       }
    ],
    "description": "cette application extends trello et infusionsoft pour ajouter des notes vocal",
+   "homepage_url": "https://therapiequantique.net",
    "externally_connectable": {
-      "matches": [ "*://therapiequantique.net/*"]
+      "matches": [ "*://therapiequantique.net/*" , "*://localhost/*" ]
    }, 
    "icons": {"128":"img/icon.png"},
    "manifest_version": 2,
-   "name": "IFS-NOTE-VOCAL",
-   "permissions": [ "tabs", "storage", "clipboardWrite", "activeTab", "contextMenus", "notifications", "background", "http://*/*", "https://*/*" ],
-   "version": "2.3.0",
+   "name": "VOCAL-NOTE-IFS-TRELLO-MOBILE",
+   "short_name": "Vocal&Note",
+   "permissions": [ "tabs", "clipboardWrite" , "storage" , "http://localhost:8000"],
+   "version": "3.0.0",
    "web_accessible_resources": [ "img/*" ]
 }
