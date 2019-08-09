@@ -49,41 +49,45 @@ function loadVocale( notes ) {
 			}
 			ID = extractUrlValue( 'ID' , href )
 		}
-		let note = notes.filter( e => (e.nativeId==ID||e.nativeId == ID+"")&&(type == e.attache)? true : false ) ; 
+		let note = notes.find( e => (e.native_id==ID||e.native_id == ID+"")&&(type == e.attache)? true : false ) ; 
 		let content = $(e).parent('.noteColumn').find('.noteContentText')
 		let precontent = content.text().trim() ;
-		console.log( note )
-		if ( ID && note.length ) {
+		console.log( note , notes )
+		if ( ID && note ) {
 			if ( content.length ) {
-
-				let url = Api.url+'/audio/'+note[0].unique ; 
+				let url = Api.url+'/audio/'+note.unique ; 
 				console.log( '___API FIND RESPONSE' )
-				let [ err , form ] = await Api.get( '/form/'+note[0].id ) ;
-				console.log( form[2] , note[0].id , '/form/'+note[0].id )
+				let [ err , form ] = await Api.fetch( '/api/form/'+note.id ) ;
+				console.log( form , note.id , '/api/form/'+note.id )
 				console.log( '_____________________' )
-				let text = formateComment( form ) ; 
+				let text = formateComment( form.data ) ; 
 				console.log( text )
-        		new listen( content[0] , url , 'audio-liste-note-'+index , '<div><a target="_blank"  href="https://therapiequantique.net/read/'+note[0].unique+'">https://therapiequantique.net/read/'+note[0].unique+'</a></div>'+'<div>'+text+'</div>' )
+        		new listen( content[0] , url , 'audio-liste-note-'+index , '<div><a target="_blank"  href="'+Api.url+'/read/'+note.unique+'">'+Api.url+'/read/'+note.unique+'</a></div>'+'<div>'+text+'</div>' )
 			}
 			//ceci est un note vocale  
-		}else if ( precontent.indexOf('https://therapiequantique.net/read/') >= 0 ) {
+		}else if ( precontent.indexOf(Api.url+'/read/') >= 0 ) {
 			let repl = precontent.replace(new RegExp('\r?\n','g'), ''); ; 
-			let sdsd = /https:\/\/therapiequantique.net\/read\/(.*)/gi;
+			repl = repl.replace(new RegExp(Api.url,'g'), ''); ; 
+			let sdsd = /(.*)read\/(.*)/gi;
 			let s = sdsd.exec(repl);
-			if ( s[1] ) {
+			console.log( s ); 
+			if ( s[2] ) {
 				console.log( 'update note ici' )  ;
-				console.log( s[1] , ID )
+				console.log( s[2] , ID )
 				//récupération des informations de cette note ci pour voire si c'est 
 				//un note vocal ou pas. si c'est est une, on récupère les information via 
-				console.log( `/infusionsoft/setnote/${s[1]}/${ID}/`+type )
-				var [ error , upnote ] = await Api.get( `/infusionsoft/setnote/${s[1]}/${ID}/`+type )
-				if ( upnote && upnote.id ) {
-					let url = Api.url+'/audio/'+s[1] ; 
+				console.log( `/infusionsoft/setnote/${s[2]}/${ID}/`+type )
+				var [ error , upnote ] = await Api.fetch( `/api/note/attache/${s[2]}/${ID}/`+type )
+				if ( upnote && upnote.data && upnote.data.id ) {
+					console.log( upnote )
+					let url = Api.url+'/audio/'+s[2] ; 
 					//récupération des formulaires de cette notes 
-					var [ err , form ] = await Api.get( '/form/'+upnote.id ) ;
+					var [ err , form ] = await Api.fetch( '/api/form/'+upnote.data.id ) ;
 					console.log( form )
-					let text = formateComment( form ) ; 
-        			new listen( content[0] , url , 'audio-liste-note-'+upnote.id , '<div><a target="_blank"  href="https://therapiequantique.net/read/'+s[1]+'">https://therapiequantique.net/read/'+s[1]+'</a></div>'+'<div>'+text+'</div>' )
+					if( !form )
+						return !1 ; 
+					let text = formateComment( form.data ) ; 
+        			new listen( content[0] , url , 'audio-liste-note-'+upnote.data.id , '<div><a target="_blank"  href="'+Api.url+'/read/'+s[2]+'">'+Api.url+'/read/'+s[2]+'</a></div>'+'<div>'+text+'</div>' )
 				}
 			}
 		}
@@ -105,7 +109,7 @@ async function initContent(){
 	//récupération de tout les notes de cette infusionsoft 
 	var [ err , note ]  = await Api.fetch( '/api/notes/'+app.id ) ;
 	console.log( note ) 
-	note?loadVocale( note ):'';
+	note.data?loadVocale( note.data ):'';
 }
 
 let ready = false ; 

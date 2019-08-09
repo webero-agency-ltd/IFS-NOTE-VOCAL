@@ -22,7 +22,7 @@
       },
       {
          "js": [ "assets/jquery/jquery-2.2.3.min.js" , "js/event.js" ,  "js/listen.js", "js/recorder.js" , "js/vocale.js" , "js/lib.js" , "page/noteEdit.js" ],
-         "matches": [ "http://*.infusionsoft.com/ContactAction/manageContactAction.jsp*", "https://*.infusionsoft.com/ContactAction/manageContactAction.jsp*" ]
+         "matches": [ "http://*.infusionsoft.com/ContactAction/manageContactAction_legacy.jsp*","https://*.infusionsoft.com/ContactAction/manageContactAction_legacy.jsp*","http://*.infusionsoft.com/ContactAction/manageContactAction.jsp*", "https://*.infusionsoft.com/ContactAction/manageContactAction.jsp*" ]
       },
       {
          "js": [ "assets/jquery/jquery-2.2.3.min.js" , "js/event.js" ,  "js/listen.js", "js/recorder.js" , "js/vocale.js" , "js/lib.js" , "page/trello.js" ],

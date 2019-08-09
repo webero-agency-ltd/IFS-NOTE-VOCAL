@@ -44,15 +44,16 @@ async function dinamicForulaire(){
 	//récupération de la valeur par défaut de forlulaire 
 	let def = 'comptabilite';
 	if ( navigator.note && navigator.note.id ) {
-		var [ err , app ] = await Api.get( '/form/'+navigator.note.id ) ;
-		for( let { NoteId , name , type , value } of app ) {
+		var [ err , app ] = await Api.fetch( '/api/form/'+navigator.note.id ) ;
+		console.log( app )
+		for( let { name , type , value } of app.data ) {
 			console.log( '__________________________' )
 			if ( name == "categorie-select" ) {
 				def = value ; 
 			}else if ( name == "vitesse-closing-select" && value ) {
 				value = value.split(',') 
 			}
-			console.log( NoteId , name , type , value )
+			console.log( name , type , value )
 			$('#'+name).val( value )
 		}
 	}
@@ -220,12 +221,7 @@ function placeNoteEditRecorder( ID ) {
 	} else{
 		desable = false;
 		NOTEID = navigator.note.unique ; 
-		setTimeout(async function() {
-			let [ err , post ] = await Api.get( '/note/nativeId/'+ID+'/note' )
-			if( post.unique ){
-        		new listen( 'recordingsList' , Api.url+'/audio/'+post.unique , 'audio-liste-note-record' )
-			}
-        }, 1000);
+        new listen( 'recordingsList' , Api.url+'/audio/'+navigator.note.unique , 'audio-liste-note-record' )
 	}
 	console.log( NOTEID )
     let vo = new Vocale()
@@ -258,19 +254,19 @@ function placeNoteEditRecorder( ID ) {
             type : 'infusionsoft' ,
 	    	attache : 'note' ,
 	    	filenoteeditefile : true ,
-	    }
-        ID?body['update'] = true : ''; 
+	    } 
         file?body['file'] = true : body['file'] = false  ; 
-		let [ err , post ] = await Api.fetch( '/api/note' , { 
+		let [ err , post ] = await Api.fetch( '/api/note'+(navigator.note&&navigator.note.id?'/'+navigator.note.id:'') , { 
 			method : 'POST',
 			headers : true , 
 			body 
 		})
+		console.log( post );
+        Event.emit('resetData')
 		if ( !post ||( post && !post.data ) ||( post && post.data && !post.data.id ) ) {
 			alert('une erreur est survenue')
 			return !1;
 		}
-
 		let [ error , form ] = await Api.fetch( '/api/form/'+post.data.id , { 
 			method : 'POST',
 			headers : true , 
@@ -314,19 +310,18 @@ async function initContent(){
 	navigator.app = app ;
 	//récupération des valeurs des notes par défaut dans notre application 
 	if ( ID ) {
-		var [ err , note ] = await Api.get( '/note/nativeId/'+ID+'/note' ) ; 
-		navigator.note = note ;
+		var [ err , note ] = await Api.fetch( '/api/note?native_id='+ID ) ; 
+		navigator.note = note.data ;
 		console.log( navigator.note , (!navigator.note || (navigator.note && !navigator.note.id)) && !vocaux  , vocaux )
 		if ( (!navigator.note || (navigator.note && !navigator.note.id)) && !vocaux ) {
 			return !1
 		}
-		var [ err , native ] = await Api.get( '/infusionsoft/note/'+ID + '/?appId='+navigator.app.id) ; 
+		var [ err , native ] = await Api.fetch( '/api/infusionsoft/note/'+navigator.app.id+'/'+ID ) ; 
 		console.log( native )
-		console.log( '/infusionsoft/note/'+ID + '/?appId='+navigator.app.id ) ; 
-		if ( ! native.contact_id ) 
+		if ( ! native.data.contact_id ) 
 			return !1
-		console.log("666")
-		navigator.note['contact_id'] = native ['contact_id'] ; 
+		console.log("6")
+		navigator.note['contact_id'] = native.data.contact_id ; 
 		nativeId = ID ;
 	}
 	placeNoteEditRecorder( ID ) ; 

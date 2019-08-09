@@ -75,16 +75,16 @@ async function dinamicForulaire(){
     //récupération de la valeur par défaut de forlulaire 
     let def = 'comptabilite';
     if ( (navigator.task && navigator.task.id) || ( navigator.note && navigator.note.id ) ) {
-        var [ err , app ] = await Api.get( '/form/'+(( navigator.note && navigator.note.id )?navigator.note.id:navigator.task.id) ) ;
-        for( let { NoteId , name , type , value } of app ) {
+        var [ err , app ] = await Api.fetch( '/api/form/'+(( navigator.note && navigator.note.id )?navigator.note.id:navigator.task.id) ) ;
+        for( let { name , type , value } of app.data ) {
             console.log( '__________________________' )
-            console.log( NoteId , name , type , value )
+            console.log( name , type , value )
             if ( name == "categorie-select" ) {
                 def = value ; 
             }else if ( name == "vitesse-closing-select" && value ) {
                 value = value.split(',') 
             }
-            console.log( NoteId , name , type , value )
+            console.log( name , type , value )
             $('#'+name).val( value )
         }
     }
@@ -155,13 +155,22 @@ async function upload( NOTEID , file , save = true  ){
             type : 'infusionsoft' ,
             filenoteeditefile : true ,
         }
-        navigator.task && navigator.task.id?body['update'] = true : ''; 
+
+        if( (navigator.task && navigator.task.id) )
+           body['update'] = true ; 
+
+       if( (navigator.note && navigator.note.id) )
+           body['note'] = navigator.note.id ; 
+
         file?body['file'] = true : body['file'] = false  ; 
-        let [ err , post ] = await Api.fetch( '/api/note' , { 
+
+        let [ err , post ] = await Api.fetch( ((navigator.note && navigator.note.id) ? '/api/note/convert':'/api/note') + (navigator.task&&navigator.task.id?'/'+navigator.task.id:'') , { 
             method : 'POST',
             headers : true , 
             body 
         })
+
+        Event.emit('resetData')
         if ( !post ||( post && !post.data ) ||( post && post.data && !post.data.id ) ) {
             alert('une erreur est survenue')
             return !1;
@@ -292,13 +301,7 @@ function placeTaskEditRecorder( ID ) {
 	} else{
         desable = false;
 		NOTEID = ( navigator.note && navigator.note.id )?navigator.note.unique:navigator.task.unique ; 
-        setTimeout(async function() {
-            let [ err , post ] = await Api.get( '/note/nativeId/'+ID+(( navigator.note && navigator.note.id )?'/note':'/task'))
-            console.log(' ---- ' , post , '/note/nativeId/'+ID+(( navigator.note && navigator.note.id )?'/note':'/task') )
-            if( post.unique ){
-                new listen( 'recordingsList' , Api.url+'/audio/'+post.unique , 'audio-liste-note-record' )
-            }
-        }, 1000);
+        new listen( 'recordingsList' , Api.url+'/audio/'+NOTEID , 'audio-liste-note-record' )
 	}
     console.log( NOTEID )
     vo = new Vocale()
@@ -361,22 +364,24 @@ async function initContent(){
     navigator.app = app ; 
     //récupération des valeurs des tache par défaut dans notre application 
     if ( ID ) {
-        var [ err , note ] = await Api.get( '/note/nativeId/'+ID+'/task' ) ; 
-        navigator.task = note ;
+        var [ err , note ] = await Api.fetch( '/api/note?native_id='+ID ) ; 
+        console.log( '---TASK DATA' ) ;
+        console.log( navigator.task ) ;
+        navigator.task = note.data ;
         if ( (!navigator.task || (navigator.task && !navigator.task.id)) && !vocaux ) {
             return !1
         }
         console.log( '/infusionsoft/task/'+ID +'/?appId='+navigator.app.id )
-        var [ err , native ] = await Api.get( '/infusionsoft/task/'+ID +'/?appId='+navigator.app.id ) ; 
+        var [ err , native ] = await Api.fetch( '/api/infusionsoft/task/'+navigator.app.id+'/'+ID ) ; 
         console.log( native )
-        if ( !native || !native.contact || !native.contact.id ) 
+        if ( !native || !native.data.contact || !native.data.contact.id ) 
             return !1
-        navigator.task['contact_id'] = native ['contact_id'] ; 
+        navigator.task['contact_id'] = native.data.contact.id ; 
     }else if ( NOTEID ) {
         ID = nativeId ; 
         //récupération des informations des notes 
-        var [ err , note ] = await Api.get( '/note/nativeId/'+nativeId+'/note' ) ; 
-        navigator.note = note ;
+        var [ err , note ] = await Api.fetch( '/api/note?native_id='+nativeId ) ; 
+        navigator.note = note.data ;
         console.log( navigator.note , '/note/nativeId/'+nativeId+'/note' )
         if ( (!navigator.note || (navigator.note && !navigator.note.id)) && !vocaux ) {
             return !1
