@@ -9,13 +9,19 @@ var request = async function( url , op ){
         delete op['body']
     console.log( url , op )
     let resp = await fetch( url , op )
+    console.log( resp )
     let response = null ; 
     if ( resp.ok ) { 
         try { response = await resp.json() ; } 
         catch(e) {
+            let text = await resp.text() 
+            console.log( text )
             return [true, null];
         }
         return [ false , response ]
+    }else{
+        let text = await resp.text() 
+            console.log( text )
     }
     return [true, null];
 }

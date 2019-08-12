@@ -1,19 +1,17 @@
 let background = true ;
 
-chrome.runtime.onMessageExternal.addListener(function ( data ) {
+chrome.runtime.onMessageExternal.addListener(async function ( data ) {
     console.log( data )
     if (data["setApiKey"]) {
         key = data["setApiKey"];
         Auth.setApiKey(key.access_token);
-        Auth.checkApiKey(function (apiKey) {
-            var a67;
-            if (apiKey !== !1) {
-                a67 = chrome.extension.getViews({ type: "popup" });
-                for (var f67 = 0; f67 < a67["length"]; f67++) {
-                    a67[f67]["reload"]();
-                }
+        let apiKey = await Auth.checkApiKey();
+        if ( apiKey !== !1 ) {
+            var a67 = chrome.extension.getViews({ type: "popup" });
+            for (var f67 = 0; f67 < a67["length"]; f67++) {
+                a67[f67]["reload"]();
             }
-        });
+        }
     } 
 });
 
@@ -50,8 +48,8 @@ Event.on('request',async function( data ){
 })
 
 //écoute evene
-chrome.runtime.onConnect.addListener(function (externalPort) {
-    let APIkey = Auth.checkApiKey();
+chrome.runtime.onConnect.addListener(async function (externalPort) {
+    let APIkey = await Auth.checkApiKey();
     console.log('--- initialisation de tout les app data')
     if ( APIkey ) 
         emit('IntiAppData',true,'all')

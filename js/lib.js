@@ -1,6 +1,6 @@
 var showable , bytesToSize , formateComment , formPlace , FormValueFormate , Auth , Icon , Dom  , Json , wait , makeid , loadeNoteListe , Note , sendBlobToApp , getParams , extractUrlValue , lecteurTpl ; 
-var DOMAINE = "http://therapiequantique.net" ;
-//var DOMAINE = "http://localhost:8000" ;
+//var DOMAINE = "http://therapiequantique.net" ;
+var DOMAINE = "http://localhost:8000" ;
 
 Auth = {
     checkApiKey: async function () {
@@ -150,17 +150,16 @@ Block = {
     	console.log('---Change AFFICHAGE BLOCK : ' , template  + ".html" ) ; 
         $("#mainFrame")["attr"]("src", template  + ".html");
     },
-    syncBlock: function () {
-        Auth.getApiKey(function (apiKey) {
-        	console.log( ' --- API KEY EST ICI : ' , apiKey )
-            if (apiKey === '') {
-                Block.changeBlock('login');
-                Icon.setGreyIcon();
-            } else {
-                Block.changeBlock('user');
-                Icon.setColoredIcon();
-            }
-        });
+    syncBlock: async function () {
+        let apiKey = await Auth.checkApiKey();
+        console.log('-- auth' , apiKey )
+        if ( apiKey ) {
+            Block.changeBlock('user');
+            Icon.setColoredIcon();
+        } else {
+            Block.changeBlock('login');
+            Icon.setGreyIcon();
+        }
     }
 };
 

@@ -98,6 +98,7 @@ function placeNoteEditRecorder( ) {
  			console.log( note , '/note/'+native_id )
 			if ( note && note.data && note.data.id ) {
 				navigator.note = note.data;  
+				unique = navigator.note.unique ; 
 		        new listen( 'recordingsList' ,  Api.url+'/audio/'+navigator.note.unique  , 'audio-liste-note-record' )
 			}else{
 				unique = makeid( 16 ) ; 
@@ -121,10 +122,10 @@ function placeNoteEditRecorder( ) {
 			Dom.watch('#duplicate_task', () => {
 				let url_vocal_note = Api.url ;
 				$('#duplicate_task').on('click',function (argument) {
-					window.open(`${url_vocal_note}/vocal-note?action=duplicate#/update/${NOTEID}`);
+					window.open(`${url_vocal_note}/mobile/${unique}/duplicate`);
 				})
 				$('#copy_task').on('click',function (argument) {
-					window.open(`${url_vocal_note}/vocal-note?action=copy#/update/${NOTEID}`);
+					window.open(`${url_vocal_note}/mobile/${unique}/copy`);
 				})
 			})
 		}else if( !btnAddNote && ready === true ){

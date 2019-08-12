@@ -300,8 +300,14 @@ function placeTaskEditRecorder( ID ) {
 		NOTEID = makeid( 16 ) ; 
 	} else{
         desable = false;
-		NOTEID = ( navigator.note && navigator.note.id )?navigator.note.unique:navigator.task.unique ; 
-        new listen( 'recordingsList' , Api.url+'/audio/'+NOTEID , 'audio-liste-note-record' )
+        if( navigator.note && navigator.note.id ){
+            NOTEID = makeid( 16 ) ; 
+            new listen( 'recordingsList' , Api.url+'/audio/'+navigator.note.unique , 'audio-liste-note-record' )
+        }
+        else{
+            NOTEID = navigator.task.unique ; 
+            new listen( 'recordingsList' , Api.url+'/audio/'+NOTEID , 'audio-liste-note-record' )
+        }
 	}
     console.log( NOTEID )
     vo = new Vocale()
