@@ -1,6 +1,6 @@
 var showable , bytesToSize , formateComment , formPlace , FormValueFormate , Auth , Icon , Dom  , Json , wait , makeid , loadeNoteListe , Note , sendBlobToApp , getParams , extractUrlValue , lecteurTpl ; 
-//var DOMAINE = "http://therapiequantique.net" ;
-var DOMAINE = "http://localhost:8000" ;
+var DOMAINE = "https://therapiequantique.net" ;
+//var DOMAINE = "http://localhost:8000" ;
 
 Auth = {
     checkApiKey: async function () {
