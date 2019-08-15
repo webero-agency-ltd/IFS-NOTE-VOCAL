@@ -1,13 +1,16 @@
 var showable , bytesToSize , formateComment , formPlace , FormValueFormate , Auth , Icon , Dom  , Json , wait , makeid , loadeNoteListe , Note , sendBlobToApp , getParams , extractUrlValue , lecteurTpl ; 
 var DOMAINE = "https://therapiequantique.net" ;
 //var DOMAINE = "http://localhost:8000" ;
+window.userConnected = null ; 
 
 Auth = {
     checkApiKey: async function () {
         let res = await this.getApiKey();
         if (res !== '') {
         	let [ err , resp ] = await Api.fetch('/api/user') ; 
+        	console.log( '- user connected ! ' , resp )
         	if( resp && resp.id != 'undefined' ){
+        		window.userConnected = resp ; 
         		Icon.setColoredIcon();
                 return res
         	}
@@ -31,12 +34,14 @@ Auth = {
 	        });
 		});
     },
-    logoutAction: async function (c8) {
-        let [ err , resp ] = await Api.fetch('/api/logout') ; 
-        if( resp ){
-        	chrome.storage.sync.clear(c8);
-        }
-        Icon.setGreyIcon();
+    logoutAction: async function () {
+       	return new Promise((resolve, reject) => {
+		    chrome.storage.sync.set({ apiKey : '' }, function ( e ) {
+	            return resolve( true );
+		        Icon.setGreyIcon();
+		        return resp ; 
+	        });
+		});
     }
 };
 
@@ -147,10 +152,11 @@ Dom = {
 
 Block = {
     changeBlock: function ( template ) {
-    	console.log('---Change AFFICHAGE BLOCK : ' , template  + ".html" ) ; 
+    	console.log('---Change AFFICHAGE BLOCK : ' , template  + ".html" , $("#mainFrame") ) ; 
         $("#mainFrame")["attr"]("src", template  + ".html");
     },
     syncBlock: async function () {
+        console.log('-- mi-check ary za zao' )
         let apiKey = await Auth.checkApiKey();
         console.log('-- auth' , apiKey )
         if ( apiKey ) {

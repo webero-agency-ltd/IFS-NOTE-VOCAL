@@ -12,7 +12,9 @@ chrome.runtime.onMessageExternal.addListener(async function ( data ) {
                 a67[f67]["reload"]();
             }
         }
-    } 
+    } else if( data['deleteApiKey'] ){
+        Auth.logoutAction();
+    }
 });
 
 function emit(e,d) {
@@ -50,7 +52,7 @@ Event.on('request',async function( data ){
 //écoute evene
 chrome.runtime.onConnect.addListener(async function (externalPort) {
     let APIkey = await Auth.checkApiKey();
-    console.log('--- initialisation de tout les app data')
+    console.log('--- initialisation de tout les app data' , APIkey )
     if ( APIkey ) 
         emit('IntiAppData',true,'all')
     else
