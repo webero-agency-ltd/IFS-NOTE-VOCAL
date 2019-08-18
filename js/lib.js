@@ -1,4 +1,4 @@
-var showable , bytesToSize , formateComment , formPlace , FormValueFormate , Auth , Icon , Dom  , Json , wait , makeid , loadeNoteListe , Note , sendBlobToApp , getParams , extractUrlValue , lecteurTpl ; 
+var showable , formateTitle , bytesToSize , formateComment , formPlace , FormValueFormate , Auth , Icon , Dom  , Json , wait , makeid , loadeNoteListe , Note , sendBlobToApp , getParams , extractUrlValue , lecteurTpl ; 
 var DOMAINE = "https://therapiequantique.net" ;
 //var DOMAINE = "http://localhost:8000" ;
 window.userConnected = null ; 
@@ -526,3 +526,20 @@ showable = function ( def ) {
 		}
 	}
 };
+
+//libs de formatage de titre a afficher 
+formateTitle = function( e , sujet ) {
+	let def = e.toUpperCase() ; 
+	let product = $('#produit-select').val() ; 
+	let info = '' ; 
+	if( $('#'+e).val() !== '_____' ){
+		let temps = $('#'+e).val() ; 
+		if( temps ) info = ' - ' + temps ;
+	}else {
+		let temps = $('#'+e+'_autre').val().trim() ; 
+		if( temps ) info = ' - ' + temps ;
+	}
+    let title = def +' '+ product + info ; 
+    sujet.val( title.trim() ) ;
+    console.log( title ) 
+}

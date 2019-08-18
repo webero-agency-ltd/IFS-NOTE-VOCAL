@@ -32,16 +32,9 @@ function inputTpl ( title ,value , id , placeholder = "" , text = "text" , min="
 	</div>` ; 
 }
 
-function formateTitle(e){
-	let evalue = $('#'+e).val() ;
-	console.log( evalue ) ; 
-	let	title = e.toUpperCase()+' '+$('#produit-select').val()+' - '+( $('#'+e).val() !== '_____' ? $('#'+e).val() : $('#'+e+'_autre').val() ); 
-  	$('#subject').val( title ) ;
-  	console.log(' -TITLE : ' , title ) ; 
-}
-
 async function dinamicForulaire(){
 	//récupération de la valeur par défaut de forlulaire 
+    var sujet = $('#subject') ; 
 	let def = 'comptabilite';
 	if ( navigator.note && navigator.note.id ) {
 		var [ err , app ] = await Api.fetch( '/api/form/'+navigator.note.id ) ;
@@ -59,57 +52,57 @@ async function dinamicForulaire(){
 	}
 	//on cache tout d'abord les éléments inutilement de l'application
 	showable( def )
-	formateTitle( def ) ; 
+	formateTitle( def , sujet ) ; 
 	//changement des catégorie a afficher 
 	$('body').on('input','#categorie-select',function ( e ) {
 		def = $(this).val() ; 
 		showable( def )
-		formateTitle( def ) ; 
+		formateTitle( def , sujet ) ; 
 	})
 
 	$('body').on('input','#produit-select',function ( e ) {
 		showable( def )
-		formateTitle( def ) ; 
+		formateTitle( def , sujet ) ; 
 	})
 
 	$('body').on('input','#commercial',function ( e ) {
 		showable( def )
-		formateTitle( def ) ; 
+		formateTitle( def , sujet ) ; 
 	})
 
 	$('body').on('input','#sav',function ( e ) {
 		showable( def )
-		formateTitle( def ) ; 
+		formateTitle( def , sujet ) ; 
 	})
 
 	$('body').on('input','#comptabilite',function ( e ) {
 		showable( def )
-		formateTitle( def ) ; 
+		formateTitle( def , sujet ) ; 
 	})
 
 	$('body').on('input','#categorie-select',function ( e ) {
 		showable( def )
-		formateTitle( def ) ; 
+		formateTitle( def , sujet ) ; 
 	})
 
 	$('body').on('input','#autre',function ( e ) {
 		showable( def )
-		formateTitle( def ) ; 
+		formateTitle( def , sujet ) ; 
 	})
 
 	$('body').on('input','#commercial_autre',function ( e ) {
 		showable( def )
-		formateTitle( def ) ; 
+		formateTitle( def , sujet ) ; 
 	})
 
 	$('body').on('input','#sav_autre',function ( e ) {
 		showable( def )
-		formateTitle( def ) ; 
+		formateTitle( def , sujet ) ; 
 	})
 
 	$('body').on('input','#comptabilite_autre',function ( e ) {
 		showable( def )
-		formateTitle( def ) ; 
+		formateTitle( def , sujet ) ; 
 	})
 
 }
