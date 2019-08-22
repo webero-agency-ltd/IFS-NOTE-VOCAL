@@ -78,6 +78,7 @@ function placeNoteEditRecorder( ) {
 		//lancement a chaque update du boad 
 		let btnAddNote = document.querySelector('.js-plugin-sections');
 		if(  btnAddNote && ready === false ){
+			navigator.note = null ; 
 			ready = true ; 
 			let btnAddNote = $('.card-detail-data') ;  
 		    let title = $('.js-card-detail-title-input') ;
